@@ -14,3 +14,11 @@
 .idea/vcs.xml
 
 __pycache__/for_utilities.cpython-38.pyc
+
+__pycache__/al_plot_utils.cpython-38.pyc
+
+__pycache__/ForRegVars.cpython-38.pyc
+
+__pycache__/RegressionFor.cpython-38.pyc
+
+.idea/other.xml
