@@ -1,16 +1,18 @@
-""" Data Preprocessing: This script performs the preprocessing for the FOR paper """
+"""Data Preprocessing: This script performs the preprocessing for the FOR paper."""
+
+import sys
 
 import numpy as np
-from for_utilities import load_data, sorted_nicely, get_file_paths
-import pandas as pd
-import sys
+from all_in import get_file_paths, load_data, sorted_nicely
+
+from for_utilities import safe_save_dataframe
 
 
 def preprocessing():
-    """ This function loads and preprocesses the adaptive learning BIDS data for further analyses """
+    """This function loads and preprocesses the adaptive learning BIDS data for further analyses."""
 
     # Data folder
-    folder_path = 'for_bids_data'
+    folder_path = "for_data/for_bids_data"
 
     # Get all file names
     identifier = "*behav.tsv"
@@ -27,7 +29,7 @@ def preprocessing():
     # -----------------------------
 
     # Extract block indexes
-    new_block = data['new_block'].values  # block change indicator
+    new_block = data["new_block"].values  # block change indicator
 
     # Recode last entry in variables of interest of each block to nan
     # to avoid that data of different participants are mixed
@@ -35,69 +37,130 @@ def preprocessing():
     to_nan[:-1] = new_block[1:]
     to_nan[-1] = 1  # manually added, because no new block after last trial
 
-    # Prediction error:
-    data.loc[to_nan == 1, 'delta_t'] = np.nan
+    # Prediction error
+    data.loc[to_nan == 1, "delta_t"] = np.nan
+    data["delta_t_rad"] = np.deg2rad(data["delta_t"])
 
-    # Absolute estimation error:
-    data['e_t'] = abs(data['e_t'])
+    # Absolute estimation error
+    data["e_t"] = abs(data["e_t"])
+    data["e_t_rad"] = np.deg2rad(data["e_t"])
 
     # Update: On trial t, we analyze the difference between belief at t and t+1
     a_t = np.full(len(data), np.nan)
-    a_t[:-1] = data['a_t'][1:]
+    a_t[:-1] = data["a_t"][1:].copy()
     a_t[to_nan == 1] = np.nan
-    data['a_t'] = a_t
+    data["a_t"] = a_t
+    data["a_t_rad"] = np.deg2rad(data["a_t"])
+
+    # Prediction in radians
+    data["b_t_rad"] = np.deg2rad(data["b_t"])
+
+    # Mean in radians
+    data["mu_t_rad"] = np.deg2rad(data["mu_t"])
+
+    # Outcome in radians
+    data["x_t_rad"] = np.deg2rad(data["x_t"])
+
+    # Noise-level dummy variable
+    data["kappa_dummy"] = np.nan
+    data.loc[data["kappa_t"] == 8, "kappa_dummy"] = 1
+    data.loc[data["kappa_t"] == 16, "kappa_dummy"] = -1
+
+    # Concentration to variance
+    vm_var = 1.0 / data["kappa_t"]
+    data["sigma"] = np.sqrt(vm_var)
+
+    # Catch dummy
+    data["hit_dummy"] = np.nan
+    data.loc[data["r_t"] == 1, "hit_dummy"] = 1
+    data.loc[data["r_t"] == 0, "hit_dummy"] = -1
 
     # Perseveration: pers := 1, if a_t=0; 0, else
-    data['pers'] = a_t == 0
+    data["pers"] = a_t == 0
 
     # Add information on group (here all in the same group)
-    data['group'] = 0
-
-    # Rename ID to subj_num for consistency with earlier analyses
-    data = data.rename(columns={"ID": "subj_num"})
+    data["group"] = 0
 
     # Test if expected values appear in preprocessed data frames
     # ----------------------------------------------------------
 
     # Extrac number of subjects
-    all_id = list(set(data['subj_num']))  # ID for each participant
+    all_id = list(set(data["subj_num"]))  # ID for each participant
     n_subj = len(all_id)  # number of participants
 
     # Cycle over subjects
     for i in range(n_subj):
 
         # Extract data of current subject
-        df_subj = data[(data['subj_num'] == i + 1)].copy()
+        df_subj = data[(data["subj_num"] == i + 1)].copy()
 
         # Check expected values
-        if not np.sum(np.isnan(df_subj['delta_t'])) == 8:
-            sys.exit("Unexpected NaN's in delta_t")
-        if not np.sum(np.isnan(df_subj['a_t'])) == 8:
-            sys.exit("Unexpected NaN's in a_t")
-        if not np.sum(df_subj['new_block']) == 8:
-            sys.exit("Unexpected NaN's in new_block")
-        if not np.sum(np.isnan(df_subj['subj_num'])) == 0:
-            sys.exit("Unexpected NaN's in subj_num")
-        if not np.sum(np.isnan(df_subj['group'])) == 0:
-            sys.exit("Unexpected NaN's in group")
-        if not np.sum(np.isnan(df_subj['x_t'])) == 0:
-            sys.exit("Unexpected NaN's in x_t")
-        if not np.sum(np.isnan(df_subj['b_t'])) == 0:
-            sys.exit("Unexpected NaN's in b_t")
-        if not np.sum(np.isnan(df_subj['mu_t'])) == 0:
-            sys.exit("Unexpected NaN's in mu_t")
-        if not np.sum(np.isnan(df_subj['c_t'])) == 0:
-            sys.exit("Unexpected NaN's in c_t")
-        if not np.sum(np.isnan(df_subj['r_t'])) == 0:
-            sys.exit("Unexpected NaN's in r_t")
-        if not np.sum(np.isnan(df_subj['sigma'])) == 0:
-            sys.exit("Unexpected NaN's in sigma")
-        if not np.sum(np.isnan(df_subj['v_t'])) == 0:
-            sys.exit("Unexpected NaN's in v_t")
-        if not np.sum(np.isnan(df_subj['e_t'])) == 0:
-            sys.exit("Unexpected NaN's in e_t")
-        if not np.sum(np.isnan(df_subj['pers'])) == 0:
-            sys.exit("Unexpected NaN's in pers")
+        if not np.sum(np.isnan(df_subj["subj_num"])) == 0:
+            sys.exit("Unexpected NaNs in subj_num")
+        if not np.sum(np.isnan(df_subj["block"])) == 0:
+            sys.exit("Unexpected NaNs in block")
+        if not np.sum(df_subj["new_block"]) == 8:
+            sys.exit("Unexpected NaNs in new_block")
+        if not np.sum(np.isnan(df_subj["x_t"])) == 0:
+            sys.exit("Unexpected NaNs in x_t")
+        if not np.sum(np.isnan(df_subj["x_t_rad"])) == 0:
+            sys.exit("Unexpected NaNs in x_t_rad")
+        if not np.sum(np.isnan(df_subj["b_t"])) == 0:
+            sys.exit("Unexpected NaNs in b_t")
+        if not np.sum(np.isnan(df_subj["delta_t"])) == 8:
+            sys.exit("Unexpected NaNs in delta_t")
+        if not np.sum(np.isnan(df_subj["a_t"])) == 8:
+            sys.exit("Unexpected NaNs in a_t")
+        if not np.sum(np.isnan(df_subj["e_t"])) == 0:
+            sys.exit("Unexpected NaNs in e_t")
+        if not np.sum(np.isnan(df_subj["mu_t"])) == 0:
+            sys.exit("Unexpected NaNs in mu_t")
+        if not np.sum(np.isnan(df_subj["mu_t_rad"])) == 0:
+            sys.exit("Unexpected NaNs in mu_t_rad")
+        if not np.sum(np.isnan(df_subj["c_t"])) == 0:
+            sys.exit("Unexpected NaNs in c_t")
+        if not np.sum(np.isnan(df_subj["tac"])) == 0:
+            sys.exit("Unexpected NaNs in tac")
+        if not np.sum(np.isnan(df_subj["r_t"])) == 0:
+            sys.exit("Unexpected NaNs in r_t")
+        if not np.sum(np.isnan(df_subj["kappa_t"])) == 0:
+            sys.exit("Unexpected NaNs in kappa_t")
+        if not np.sum(np.isnan(df_subj["v_t"])) == 0:
+            sys.exit("Unexpected NaNs in v_t")
+        if not np.sum(np.isnan(df_subj["RT"])) == 0:
+            sys.exit("Unexpected NaNs in RT")
+        # Todo: Adjust initRT = NaN is some cases
+        # initRT = RT was added after HH confetti pilot
+        # for cases in which button is pressed very quickly
+        # if not np.sum(np.isnan(df_subj["initRT"])) == 0:
+        # sys.exit("Unexpected NaNs in initRT")
+        # print(np.sum(np.isnan(df_subj["initRT"])))
+        # if not np.sum(np.isnan(df_subj["initTend"])) == 0:
+        # sys.exit("Unexpected NaNs in initRT")
+        # print(np.sum(np.isnan(df_subj["initRT"])))
+        # print(np.sum(np.isnan(df_subj["initTend"])))
+        if not np.sum(np.isnan(df_subj["trial"])) == 0:
+            sys.exit("Unexpected NaNs in trial")
+        if not np.sum(np.isnan(df_subj["delta_t_rad"])) == 8:
+            sys.exit("Unexpected NaNs in delta_t_rad")
+        if not np.sum(np.isnan(df_subj["e_t_rad"])) == 0:
+            sys.exit("Unexpected NaNs in e_t_rad")
+        if not np.sum(np.isnan(df_subj["a_t_rad"])) == 8:
+            sys.exit("Unexpected NaNs in a_t_rad")
+        if not np.sum(np.isnan(df_subj["b_t_rad"])) == 0:
+            sys.exit("Unexpected NaNs in b_t_rad")
+        if not np.sum(np.isnan(df_subj["group"])) == 0:
+            sys.exit("Unexpected NaNs in group")
+        if not np.sum(np.isnan(df_subj["kappa_dummy"])) == 0:
+            sys.exit("Unexpected NaNs in kappa_dummy")
+        if not np.sum(np.isnan(df_subj["sigma"])) == 0:
+            sys.exit("Unexpected NaNs in sigma")
+        if not np.sum(np.isnan(df_subj["hit_dummy"])) == 0:
+            sys.exit("Unexpected NaNs in hit_dummy")
+        if not np.sum(np.isnan(df_subj["pers"])) == 0:
+            sys.exit("Unexpected NaNs in pers")
+        if not np.sum(np.isnan(df_subj["group"])) == 0:
+            sys.exit("Unexpected NaNs in group")
 
     return data
 
@@ -105,14 +168,7 @@ def preprocessing():
 # Run preprocessing
 # -----------------
 data_pn = preprocessing()
+data_pn.name = "data_prepr"
 
-# Load previous file for comparison
-expected_data_pn = pd.read_pickle('for_bids_data/data_prepr.pkl')
-
-# Test if equal and save data
-same = data_pn.equals(expected_data_pn)
-print("\nActual and expected preprocessed data equal:", same, "\n")
-if not same:
-    data_pn.to_pickle('for_bids_data/data_prepr_unexpected.pkl')
-else:
-    data_pn.to_pickle('for_bids_data/data_prepr.pkl')
+# Save data
+safe_save_dataframe(data_pn)

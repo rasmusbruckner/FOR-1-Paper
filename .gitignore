@@ -1,24 +1,8 @@
 
-.idea/misc.xml
+.idea/
 
-.idea/dictionaries
+__pycache__/
 
-.idea/FOR-1-Paper.iml
+.venv/
 
-.idea/inspectionProfiles/profiles_settings.xml
-
-.idea/inspectionProfiles/Project_Default.xml
-
-.idea/modules.xml
-
-.idea/vcs.xml
-
-__pycache__/for_utilities.cpython-38.pyc
-
-__pycache__/al_plot_utils.cpython-38.pyc
-
-__pycache__/ForRegVars.cpython-38.pyc
-
-__pycache__/RegressionFor.cpython-38.pyc
-
-.idea/other.xml
+figures/

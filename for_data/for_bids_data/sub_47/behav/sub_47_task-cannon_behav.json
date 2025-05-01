@@ -1,0 +1,86 @@
+{
+	"ID": {
+		"LongName": "subject ID",
+		"Description": "Numbers start from 1 to maximum number of subjects",
+		"Units": "integers"
+	},
+	"block": {
+		"LongName": "new block",
+		"Description": "Indicates when new block begins",
+		"levels": "integers"
+	},
+	"x_t": {
+		"LongName": "x_t",
+		"Description": "Current outcome",
+		"Units": "integers"
+	},
+	"b_t": {
+		"LongName": "b_t",
+		"Description": "Current prediction",
+		"Units": "integers"
+	},
+	"delta_t": {
+		"LongName": "prediction error",
+		"Description": "Difference between outcome and prediction",
+		"Units": "integers"
+	},
+	"a_t": {
+		"LongName": "update",
+		"Description": "Difference between two predictions",
+		"Units": "integers"
+	},
+	"e_t": {
+		"LongName": "estimation error",
+		"Description": "Difference mean and prediction",
+		"Units": "integers"
+	},
+	"mu_t": {
+		"LongName": "Cannon aim",
+		"Description": "Mean of the outcome generating distribution (cannon aim)",
+		"Units": "integers"
+	},
+	"c_t": {
+		"LongName": "change point",
+		"Description": "Indicates if changepoint occurred",
+		"levels": [
+			"0: No changepoint",
+			"1: Changepoint"
+		]
+	},
+	"tac": {
+		"LongName": "trials after change point",
+		"Description": "Counts the number of outcomes after last change point",
+		"Units": "integers"
+	},
+	"r_t": {
+		"LongName": "hit",
+		"Description": "Indicates if cannonball was caught or missed",
+		"levels": [
+			"0: Miss",
+			"1: Hit"
+		]
+	},
+	"kappa_t": {
+		"LongName": "concentration",
+		"Description": "Concentration of cannon distribution",
+		"Units": "float"
+	},
+	"v_t": {
+		"LongName": "catch trials",
+		"Description": "Indicates if cannon was visible or not",
+		"levels": [
+			"0: No catch trial",
+			"1: Catch trial"
+		]
+	},
+	"RT": {
+		"LongName": "reaction time",
+		"description": "Indicates the time to prediction. Note that we also recorded initiation RTs, indicating time to movement",
+		"Units": "float"
+	},
+	"initRT": {
+		"LongName": "initiation reaction time",
+		"description": "Indicates the time to movement initiation. Note that we also recorded RTs, indicating time to prediction",
+		"Units": "float"
+	}
+}
