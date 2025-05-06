@@ -239,6 +239,8 @@ ylabel = "Panic Score"
 plt.subplot(5, 4, 18)
 plot_questionnaire_correlation(x, y, xlabel, ylabel)
 
+plt.tight_layout()
+
 # Save figure
 savename = "figures/IDAS.png"
 plt.savefig(savename, transparent=False, dpi=400)

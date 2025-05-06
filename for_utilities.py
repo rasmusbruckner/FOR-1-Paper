@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
-from all_in import cm2inch
 from pycircstat2.utils import angular_distance
 
 
@@ -168,7 +167,7 @@ def plot_questionnaire_correlation(x: pd.Series, y: pd.Series, xlabel: str, ylab
 
     # Fit a line
     slope, intercept = np.polyfit(x, y, 1)
-    plt.plot(x, slope * x + intercept, color="red", label="Linear fit")
+    plt.plot(x, slope * x + intercept, color="blue")
 
     # And lables
     plt.xlabel(xlabel)
