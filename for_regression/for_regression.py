@@ -22,6 +22,7 @@ if __name__ == "__main__":
     # Update matplotlib to use Latex and to change some defaults
     matplotlib = latex_plt(matplotlib)
 
+    # Use preferred backend for Linux, or just take default
     try:
         matplotlib.use("Qt5Agg")
     except ImportError:

@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+import seaborn as sns
+from all_in import cm2inch
 from pycircstat2.utils import angular_distance
 
 
@@ -139,3 +141,42 @@ def get_sim_est_err(df_subj: pd.DataFrame, df_data: pd.DataFrame) -> float:
     sim_est_err = np.mean(abs(sim_est_err_nocp))
 
     return sim_est_err
+
+
+def plot_questionnaire_correlation(x: pd.Series, y: pd.Series, xlabel: str, ylabel: str) -> None:
+    """ This function plots questionnaire correlations with learning parameters.
+
+    Parameters
+    ----------
+    x : pd.Series
+        Regression results.
+    y : pd.Series
+        Questionnaire scores.
+    xlabel : str
+        X-axis label.
+    ylabel : str
+        Y-axis label.
+
+    Returns
+    -------
+    None
+        This function does not return any value.
+    """
+
+    # Scatter plot of single subjects
+    plt.scatter(x, y, alpha=0.6, label="Predicted mean")
+
+    # Fit a line
+    slope, intercept = np.polyfit(x, y, 1)
+    plt.plot(x, slope * x + intercept, color="red", label="Linear fit")
+
+    # And lables
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    # Compute correlation and put in title
+    r, p = stats.pearsonr(x, y)
+    plt.title(f"r = {r:.3f}; p = {p:.3f}")
+
+    # Delete unnecessary axes
+    sns.despine()

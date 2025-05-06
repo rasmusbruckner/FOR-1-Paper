@@ -1,112 +1,248 @@
-import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 import pandas as pd
-import scipy.stats as stats
+from all_in import cm2inch, latex_plt
+
+from FOR_1_Paper.for_utilities import plot_questionnaire_correlation
+
+# Update matplotlib to use Latex and to change some defaults
+matplotlib = latex_plt(matplotlib)
+
+# Use preferred backend for Linux, or just take default
+try:
+    matplotlib.use("Qt5Agg")
+except ImportError:
+    pass
+
+# Todo:
+#   1 identify potential outliers
+#   2 check inferential stats Hashim
+#   3 apply FDR correction
+#   4 Bayes factors
 
 # Regression
-df_regression = pd.read_pickle("for_data/regression_15_sp.pkl")
-
-df_regression = df_regression.sort_values(by=['ID'])
-
+df_regression = pd.read_pickle("for_data/regression_10_sp.pkl")
+df_regression = df_regression.sort_values(by=["subj_num"])
 
 # Questionnaires
 df_questionnaires = pd.read_pickle("for_data/questionnaires_totalscores.pkl")
-new_df = df_questionnaires.iloc[:-2]
+df_questionnaires = df_questionnaires.iloc[:-2]  # todo: fix this in preprocessing
+df_questionnaires = df_questionnaires.sort_values(by=["subj_num"])
 
-new_df = new_df.sort_values(by=['ID'])
+# Turn interactive mode on for plotting in debugger on Linux
+plt.ion()
 
-import matplotlib.pyplot as plt
-from all_in import cm2inch
-import seaborn as sns
-
-print('CAPE1 all:', np.corrcoef(df_regression['beta_1'][:], new_df['CAPE1'][:]))
-print('CAPE1 32:', np.corrcoef(df_regression['beta_1'][:32], new_df['CAPE1'][:32]))
-
-a, b = stats.pearsonr(df_regression['beta_1'][:], new_df['CAPE1'][:])
-
+# Plot CAPE sum score
+# -------------------
 
 fig_width = 10
 fig_height = 10
-# Create figure
-f = plt.figure(figsize=cm2inch(fig_width, fig_height))
-plt.scatter(df_regression['beta_1'][:], new_df['CAPE1'][:], alpha=0.6, label='Predicted mean')
 
-# Fit a line
-x = df_regression['beta_1'][:]
-y = new_df['CAPE1'][:]
-slope, intercept = np.polyfit(x, y, 1)
-plt.plot(x, slope * x + intercept, color='red', label='Linear fit')
+# Select data
+x = df_regression["beta_1"][:]
+xlabel = "Fixed Learning Rate"
+y = df_questionnaires["CAPE1"][:]
+ylabel = "CAPE Score"
 
-#plt.title(f"Across Subjects: Correlation: r = {r:.3f}")
-plt.xlabel("Fixed Learning Rate")
-plt.ylabel("CAPE Score")
-
-# Correlate with actual log RT
-r, p = stats.pearsonr(x, y)
-print(f"r = {p:.3f}")
-plt.title(f"r = {r:.3f}; p = {p:.3f}")
-
-plt.tight_layout()
-sns.despine()
-
+# Create and save figure
+plt.figure(figsize=cm2inch(fig_width, fig_height))
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
 savename = "figures/cape_corr.png"
 plt.savefig(savename, transparent=False, dpi=400)
-plt.ioff()
-plt.show()
-#plt.close()
 
+# Plot CAPE positive score
+# ------------------------
 
-print('SPQ1 all', np.corrcoef(df_regression['beta_1'][:], new_df['SPQ1'][:]))
-print('SPQ1 32:', np.corrcoef(df_regression['beta_1'][:32], new_df['SPQ1'][:32]))
-a, b = stats.pearsonr(df_regression['beta_1'][:], new_df['SPQ1'][:])
+# Select data
+x = df_regression["beta_1"][:]
+y = df_questionnaires["CAPE_pos"][:]
+ylabel = "CAPE pos Score"
 
-print('IDAS1 all', np.corrcoef(df_regression['beta_1'][:], new_df['IDAS1'][:]))
-print('IDAS1 32:', np.corrcoef(df_regression['beta_1'][:32], new_df['IDAS1'][:32]))
-a, b = stats.pearsonr(df_regression['beta_1'][:], new_df['IDAS1'][:])
-
-print('IDAS2 all', np.corrcoef(df_regression['beta_1'][:], new_df['IDAS2'][:]))
-print('IDAS2 32:', np.corrcoef(df_regression['beta_1'][:32], new_df['IDAS2'][:32]))
-a, b = stats.pearsonr(df_regression['beta_1'][:], new_df['IDAS2'][:])
-
-fig_width = 10
-fig_height = 10
-
-# Fit a line
-x = df_regression['beta_1'][:]
-y = new_df['IDAS2'][:]
-
-# Create figure
-f = plt.figure(figsize=cm2inch(fig_width, fig_height))
-plt.scatter(x, y, alpha=0.6, label='Predicted mean')
-
-
-slope, intercept = np.polyfit(x, y, 1)
-plt.plot(x, slope * x + intercept, color='red', label='Linear fit')
-
-#plt.title(f"Across Subjects: Correlation: r = {r:.3f}")
-plt.xlabel("Fixed Learning Rate")
-plt.ylabel("IDAS2 Score")
-
-# Correlate with actual log RT
-r, p = stats.pearsonr(x, y)
-print(f"r = {p:.3f}")
-plt.title(f"r = {r:.3f}; p = {p:.3f}")
-
-plt.tight_layout()
-sns.despine()
-
-savename = "figures/idas2_corr.png"
+# Create and save figure
+plt.figure(figsize=cm2inch(fig_width, fig_height))
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+savename = "figures/cape_pos_corr.png"
 plt.savefig(savename, transparent=False, dpi=400)
+
+# Plot CAPE negative score
+# ------------------------
+
+# Select data
+x = df_regression["beta_1"][:]
+y = df_questionnaires["CAPE_neg"][:]
+ylabel = "CAPE neg Score"
+
+# Create and save figure
+plt.figure(figsize=cm2inch(fig_width, fig_height))
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+savename = "figures/cape_neg_corr.png"
+plt.savefig(savename, transparent=False, dpi=400)
+
+# Plot CAPE depression score
+# --------------------------
+
+# Select data
+x = df_regression["beta_1"][:]
+y = df_questionnaires["CAPE_dep"][:]
+ylabel = "CAPE dep Score"
+
+# Create and save figure
+plt.figure(figsize=cm2inch(fig_width, fig_height))
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+savename = "figures/cape_dep_corr.png"
+plt.savefig(savename, transparent=False, dpi=400)
+
+# Plot IUS sum score
+# ------------------
+
+# Select data
+x = df_regression["beta_1"][:]
+y = df_questionnaires["IUS1"][:]
+ylabel = "IUS Score"
+
+# Create and save figure
+plt.figure(figsize=cm2inch(fig_width, fig_height))
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+savename = "figures/IUS.png"
+plt.savefig(savename, transparent=False, dpi=400)
+
+# Plot SPQ sum score
+# ------------------
+
+# Select data
+x = df_regression["beta_1"][:]
+y = df_questionnaires["SPQ1"][:]
+ylabel = "SPQ1 Score"
+
+# Create and save figure
+plt.figure(figsize=cm2inch(fig_width, fig_height))
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+savename = "figures/SPQ.png"
+plt.savefig(savename, transparent=False, dpi=400)
+
+# Plot IDAS sub scales
+# --------------------
+
+# Increase figure size
+fig_width = 15
+fig_height = 20
+
+# Dysphoria
+x = df_regression["beta_1"][:]
+y = df_questionnaires["dysphoria"][:]
+ylabel = "Dysphoria Score"
+
+# Create and save figure
+plt.figure(figsize=cm2inch(fig_width, fig_height))
+plt.subplot(541)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Fatigue
+y = df_questionnaires["fatigue"][:]
+ylabel = "Fatigue Score"
+plt.subplot(542)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Insomnia
+y = df_questionnaires["insomnia"][:]
+ylabel = "Insomnia Score"
+plt.subplot(543)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Suicidality
+y = df_questionnaires["suicidality"][:]
+ylabel = "Suicidality Score"
+plt.subplot(544)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Increase in appetite
+y = df_questionnaires["incr_appetite"][:]
+ylabel = "Increase Appetite Score"
+plt.subplot(545)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Loss of appetite
+y = df_questionnaires["loss_appetite"][:]
+ylabel = "Loss Appetite Score"
+plt.subplot(546)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Wellbeing
+y = df_questionnaires["wellbeing"][:]
+ylabel = "Wellbeing Score"
+plt.subplot(547)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Moodiness
+y = df_questionnaires["moodiness"][:]
+ylabel = "Moodiness Score"
+plt.subplot(548)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Mania
+y = df_questionnaires["mania"][:]
+ylabel = "Mania Score"
+plt.subplot(549)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Euphoria
+y = df_questionnaires["euphoria"][:]
+ylabel = "Euphoria Score"
+plt.subplot(5, 4, 10)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Social anxiety
+y = df_questionnaires["social_anx"][:]
+ylabel = "Social Anxiety Score"
+plt.subplot(5, 4, 11)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Claustrophobia
+y = df_questionnaires["claustrophobia"][:]
+ylabel = "Claustrophobia Score"
+plt.subplot(5, 4, 12)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Traumatic instrusions
+y = df_questionnaires["traumatic_intrusions"][:]
+ylabel = "Traumatic Intrusions Score"
+plt.subplot(5, 4, 13)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Traumatic avoidance
+y = df_questionnaires["traumatic_avoidance"][:]
+ylabel = "Traumatic Avoidance Score"
+plt.subplot(5, 4, 14)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Compulsion order
+y = df_questionnaires["compulsion_order"][:]
+ylabel = "Compulsion Order Score"
+plt.subplot(5, 4, 15)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Compulsion clean
+y = df_questionnaires["compulsion_clean"][:]
+ylabel = "Compulsion Clean Score"
+plt.subplot(5, 4, 16)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Compulsion control
+y = df_questionnaires["compulsion_control"][:]
+ylabel = "Compulsion Control Score"
+plt.subplot(5, 4, 17)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Panic
+y = df_questionnaires["panic"][:]
+ylabel = "Panic Score"
+plt.subplot(5, 4, 18)
+plot_questionnaire_correlation(x, y, xlabel, ylabel)
+
+# Save figure
+savename = "figures/IDAS.png"
+plt.savefig(savename, transparent=False, dpi=400)
+
+# Show plot
 plt.ioff()
 plt.show()
-
-
-
-
-
-# Ensure subj_num is matched
-a = 1
-
-# Compute first correlations
-
-# Compute correlations with 32 participants
-
