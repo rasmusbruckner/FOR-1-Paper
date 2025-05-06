@@ -156,7 +156,7 @@ class ForEstimation:
         Returns
         -------
         list
-            List containing estimates, llh, bic and age group.
+            List containing estimates, llh, bic, and age group.
         """
 
         # Control random number generator for reproducible results
@@ -229,7 +229,7 @@ class ForEstimation:
                 method="L-BFGS-B",
                 bounds=bnds,
                 options={"disp": False},
-            )  # options={'disp': False}
+            )
 
             # Extract minimized log likelihood
             f_llh_max = res.fun

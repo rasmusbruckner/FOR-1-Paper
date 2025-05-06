@@ -239,6 +239,7 @@ ylabel = "Panic Score"
 plt.subplot(5, 4, 18)
 plot_questionnaire_correlation(x, y, xlabel, ylabel)
 
+# Delete unnecessary axes
 plt.tight_layout()
 
 # Save figure

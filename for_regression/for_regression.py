@@ -55,10 +55,12 @@ if __name__ == "__main__":
     reg_vars.n_ker = 4  # number of kernels for estimation
     reg_vars.n_sp = 10  # 50  # number of random starting points
     reg_vars.rand_sp = True  # use random starting points
-    reg_vars.use_prior = True
+    reg_vars.use_prior = True  # todo: fit w/o prior
 
     # Run regression model
     # --------------------
+
+    # Todo: model comparison
 
     # Free parameters
     reg_vars.which_vars = {

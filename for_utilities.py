@@ -142,8 +142,10 @@ def get_sim_est_err(df_subj: pd.DataFrame, df_data: pd.DataFrame) -> float:
     return sim_est_err
 
 
-def plot_questionnaire_correlation(x: pd.Series, y: pd.Series, xlabel: str, ylabel: str) -> None:
-    """ This function plots questionnaire correlations with learning parameters.
+def plot_questionnaire_correlation(
+    x: pd.Series, y: pd.Series, xlabel: str, ylabel: str
+) -> None:
+    """This function plots questionnaire correlations with learning parameters.
 
     Parameters
     ----------
@@ -162,6 +164,8 @@ def plot_questionnaire_correlation(x: pd.Series, y: pd.Series, xlabel: str, ylab
         This function does not return any value.
     """
 
+    # Todo: optionally spearman correlation
+
     # Scatter plot of single subjects
     plt.scatter(x, y, alpha=0.6, label="Predicted mean")
 
@@ -169,13 +173,13 @@ def plot_questionnaire_correlation(x: pd.Series, y: pd.Series, xlabel: str, ylab
     slope, intercept = np.polyfit(x, y, 1)
     plt.plot(x, slope * x + intercept, color="blue")
 
-    # And lables
+    # Add labels
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
     # Compute correlation and put in title
     r, p = stats.pearsonr(x, y)
-    plt.title(f"r = {r:.3f}; p = {p:.3f}")
+    plt.title(f"r = {r:.3f}, p = {p:.3f}")
 
     # Delete unnecessary axes
     sns.despine()
