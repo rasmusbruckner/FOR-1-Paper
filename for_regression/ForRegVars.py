@@ -19,10 +19,11 @@ class RegVars:
         self.beta_3 = (
             "beta_3"  # coefficient for prediction error * relative uncertainty (tau)
         )
-        self.beta_4 = "beta_4"  # coefficient for prediction error * hit (r_t)
-        self.beta_5 = "beta_5"  # coefficient for prediction error * noise condition
-        self.beta_6 = "beta_6"  # coefficient for prediction error * catch-trial dummy
-        self.beta_7 = "beta_7"  # coefficient for estimation error * catch-trial dummy
+        self.beta_4 = "beta_4"  # coefficient for prediction error * alpha (adaptive LR)
+        self.beta_5 = "beta_5"  # coefficient for prediction error * hit (r_t)
+        self.beta_6 = "beta_6"  # coefficient for prediction error * noise condition
+        self.beta_7 = "beta_7"  # coefficient for prediction error * catch-trial dummy
+        self.beta_8 = "beta_8"  # coefficient for estimation error * catch-trial dummy
         self.omikron_0 = "omikron_0"  # noise intercept
         self.omikron_1 = "omikron_1"  # noise slope
         self.lambda_0 = "lambda_0"  # perseveration intercept
@@ -34,6 +35,7 @@ class RegVars:
             "delta_t",
             "omega_t",
             "tau_t",
+            "alpha_t",
             "r_t",
             "sigma_t",
             "vis_delta",
@@ -49,6 +51,7 @@ class RegVars:
         self.beta_5_x0 = 0
         self.beta_6_x0 = 0
         self.beta_7_x0 = 0
+        self.beta_8_x0 = 0
         self.omikron_0_x0 = 5
         self.omikron_1_x0 = 0
         self.lambda_0_x0 = 0.1
@@ -63,6 +66,7 @@ class RegVars:
         self.beta_5_x0_range = (-1, 1)
         self.beta_6_x0_range = (-1, 1)
         self.beta_7_x0_range = (-1, 1)
+        self.beta_8_x0_range = (-1, 1)
         self.omikron_0_x0_range = (1, 20)
         self.omikron_1_x0_range = (0, 1)
         self.lambda_0_x0_range = (0, 1)
@@ -77,6 +81,7 @@ class RegVars:
         self.beta_5_bnds = (-2, 2)
         self.beta_6_bnds = (-2, 2)
         self.beta_7_bnds = (-2, 2)
+        self.beta_8_bnds = (-2, 2)
         self.omikron_0_bnds = (0.1, 20)
         self.omikron_1_bnds = (0.001, 1)
         self.lambda_0_bnds = (0, 1)
@@ -91,6 +96,7 @@ class RegVars:
             self.beta_5_bnds,
             self.beta_6_bnds,
             self.beta_7_bnds,
+            self.beta_8_bnds,
             self.omikron_0_bnds,
             self.omikron_1_bnds,
             self.lambda_0_bnds,
@@ -103,10 +109,11 @@ class RegVars:
             self.beta_1: True,
             self.beta_2: True,
             self.beta_3: True,
-            self.beta_4: True,
+            self.beta_4: False,
             self.beta_5: True,
             self.beta_6: True,
             self.beta_7: True,
+            self.beta_8: True,
             self.omikron_0: True,
             self.omikron_1: True,
             self.lambda_0: False,
@@ -116,13 +123,14 @@ class RegVars:
         # Fixed parameter values
         self.fixed_coeffs_reg = {
             self.beta_0: 0.0,
-            self.beta_1: 0.2,
+            self.beta_1: 0.0,
             self.beta_2: 0.0,
             self.beta_3: 0.0,
             self.beta_4: 0.0,
             self.beta_5: 0.0,
             self.beta_6: 0.0,
             self.beta_7: 0.0,
+            self.beta_8: 0.0,
             self.omikron_0: 10.0,
             self.omikron_1: 0.0,
             self.lambda_0: 0.0,
@@ -138,6 +146,7 @@ class RegVars:
         self.beta_5_prior_mean = 0
         self.beta_6_prior_mean = 0
         self.beta_7_prior_mean = 0
+        self.beta_8_prior_mean = 0
         self.omikron_0_prior_mean = 10
         self.omikron_1_prior_mean = 0.1
         self.lambda_0_prior_mean = 0
@@ -153,6 +162,7 @@ class RegVars:
             self.beta_5_prior_mean,
             self.beta_6_prior_mean,
             self.beta_7_prior_mean,
+            self.beta_8_prior_mean,
             self.omikron_0_prior_mean,
             self.omikron_1_prior_mean,
             self.lambda_0_prior_mean,
@@ -169,6 +179,7 @@ class RegVars:
         self.beta_5_prior_width = 5
         self.beta_6_prior_width = 5
         self.beta_7_prior_width = 5
+        self.beta_8_prior_width = 5
         self.omikron_0_prior_width = 20
         self.omikron_1_prior_width = 5
         self.lambda_0_prior_width = 5
@@ -184,6 +195,7 @@ class RegVars:
             self.beta_5_prior_width,
             self.beta_6_prior_width,
             self.beta_7_prior_width,
+            self.beta_8_prior_width,
             self.omikron_0_prior_width,
             self.omikron_1_prior_width,
             self.lambda_0_prior_width,

@@ -32,6 +32,7 @@ class RegressionFor(RegressionParent):
         self.beta_5 = reg_vars.beta_5
         self.beta_6 = reg_vars.beta_6
         self.beta_7 = reg_vars.beta_7
+        self.beta_8 = reg_vars.beta_8
         self.omikron_0 = reg_vars.omikron_0
         self.omikron_1 = reg_vars.omikron_1
         self.lambda_0 = reg_vars.lambda_0
@@ -46,6 +47,7 @@ class RegressionFor(RegressionParent):
         self.beta_5_x0 = reg_vars.beta_5_x0
         self.beta_6_x0 = reg_vars.beta_6_x0
         self.beta_7_x0 = reg_vars.beta_7_x0
+        self.beta_8_x0 = reg_vars.beta_8_x0
         self.omikron_0_x0 = reg_vars.omikron_0_x0
         self.omikron_1_x0 = reg_vars.omikron_1_x0
         self.lambda_0_x0 = reg_vars.lambda_0_x0
@@ -60,6 +62,7 @@ class RegressionFor(RegressionParent):
         self.beta_5_x0_range = reg_vars.beta_5_x0_range
         self.beta_6_x0_range = reg_vars.beta_6_x0_range
         self.beta_7_x0_range = reg_vars.beta_7_x0_range
+        self.beta_8_x0_range = reg_vars.beta_8_x0_range
         self.omikron_0_x0_range = reg_vars.omikron_0_x0_range
         self.omikron_1_x0_range = reg_vars.omikron_1_x0_range
         self.lambda_0_x0_range = reg_vars.lambda_0_x0_range
@@ -74,6 +77,7 @@ class RegressionFor(RegressionParent):
         self.beta_5_bnds = reg_vars.beta_5_bnds
         self.beta_6_bnds = reg_vars.beta_6_bnds
         self.beta_7_bnds = reg_vars.beta_7_bnds
+        self.beta_8_bnds = reg_vars.beta_8_bnds
         self.omikron_0_bnds = reg_vars.omikron_0_bnds
         self.omikron_1_bnds = reg_vars.omikron_1_bnds
         self.lambda_0_bnds = reg_vars.lambda_0_bnds
@@ -104,7 +108,7 @@ class RegressionFor(RegressionParent):
         """
 
         # futuretodo: alpha model as well
-        reg_df = pd.DataFrame(columns=["delta_t_rad"])
+        reg_df = pd.DataFrame()
         reg_df["int"] = np.ones(len(df))
         reg_df["delta_t"] = df["delta_t_rad"].to_numpy()
         reg_df["tau_t"] = (
@@ -112,6 +116,7 @@ class RegressionFor(RegressionParent):
         ) * df["delta_t_rad"].to_numpy()
         # reg_df['tau_t'] = df['tau_t'].to_numpy() * df['delta_t'].to_numpy()
         reg_df["omega_t"] = df["omega_t"].to_numpy() * df["delta_t_rad"].to_numpy()
+        reg_df['alpha_t'] = df['alpha_t'].to_numpy() * df["delta_t_rad"].to_numpy()
         reg_df["r_t"] = df["hit_dummy"].to_numpy() * df["delta_t_rad"].to_numpy()
         reg_df["sigma_t"] = df["kappa_dummy"].to_numpy() * df["delta_t_rad"].to_numpy()
         reg_df["vis_delta"] = df["v_t"].to_numpy() * df["delta_t_rad"].to_numpy()
@@ -145,6 +150,7 @@ class RegressionFor(RegressionParent):
                 np.random.uniform(self.beta_5_x0_range[0], self.beta_5_x0_range[1]),
                 np.random.uniform(self.beta_6_x0_range[0], self.beta_6_x0_range[1]),
                 np.random.uniform(self.beta_7_x0_range[0], self.beta_7_x0_range[1]),
+                np.random.uniform(self.beta_8_x0_range[0], self.beta_8_x0_range[1]),
                 np.random.uniform(
                     self.omikron_0_x0_range[0], self.omikron_0_x0_range[1]
                 ),
@@ -167,6 +173,7 @@ class RegressionFor(RegressionParent):
                 self.beta_5_x0,
                 self.beta_6_x0,
                 self.beta_7_x0,
+                self.beta_8_x0,
                 self.omikron_0_x0,
                 self.omikron_1_x0,
                 self.lambda_0_x0,
@@ -225,6 +232,7 @@ class RegressionFor(RegressionParent):
                         ),
                         "tau_t": np.random.rand(n_trials),
                         "omega_t": np.random.rand(n_trials),
+                        "alpha_t": np.random.rand(n_trials),
                         "a_t_rad": np.full(n_trials, np.nan),
                         "subj_num": np.random.randint(1, 100, n_trials),
                         "ID": np.random.randint(1000, 5000, n_trials),
@@ -254,6 +262,7 @@ class RegressionFor(RegressionParent):
                         "kappa_dummy": sub_behav_data["kappa_dummy"],
                         "tau_t": sub_behav_data["tau_t"],
                         "omega_t": sub_behav_data["omega_t"],
+                        "alpha_t": sub_behav_data["alpha_t"],
                         "a_t_rad": np.full(n_trials, np.nan),
                         "subj_num": sub_behav_data["subj_num"],
                         "ID": sub_behav_data["ID"],

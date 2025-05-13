@@ -126,6 +126,9 @@ qns_list = [
 
 # Initialize
 subj_num = list()
+age = list()
+gender = list()
+
 df_totalscore = pd.DataFrame(index=np.arange(0, n_subj), columns=qns_list)
 
 # Cycle over subjects
@@ -133,6 +136,8 @@ for subjInd, subj in enumerate(subjects):
 
     # Store subject number
     subj_num.append(int(subj))
+    age.append(qns_data[qns_data["subj_num"] == subj]['age'].values[0])
+    gender.append(qns_data[qns_data["subj_num"] == subj]['sex'].values[0])
 
     # Cycle over all questionnaires
     for q_no, qname in enumerate(qns_list):
@@ -152,6 +157,8 @@ df_totalscore = df_totalscore.astype(float)
 
 # Add subject numbers
 df_totalscore["subj_num"] = subj_num
+df_totalscore["age"] = age
+df_totalscore["gender"] = gender
 
 # -----------------------------
 # Extract CAPE dimension scores
