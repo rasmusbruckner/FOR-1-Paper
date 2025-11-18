@@ -3,7 +3,8 @@
 import sys
 
 import numpy as np
-from all_in import get_file_paths, load_data, sorted_nicely
+import pandas as pd
+from allinpy import get_file_paths, load_data, sorted_nicely
 
 from for_utilities import safe_save_dataframe
 
@@ -81,6 +82,13 @@ def preprocessing():
     # Add information on group (here all in the same group)
     data["group"] = 0
 
+    # Exclude subject 70 (20031)
+    # Todo: provide justification in other script (basically showing weird behavior)
+    data = data[~data["ID"].isin([20031])].reset_index(drop=True)
+
+    # Add 1 to match Matlab integer logic (starting from 1 instead of 0)
+    data["subj_num"] = pd.factorize(data["subj_num"])[0] + 1
+
     # Test if expected values appear in preprocessed data frames
     # ----------------------------------------------------------
 
@@ -129,7 +137,7 @@ def preprocessing():
             sys.exit("Unexpected NaNs in v_t")
         if not np.sum(np.isnan(df_subj["RT"])) == 0:
             sys.exit("Unexpected NaNs in RT")
-        # Todo: Adjust initRT = NaN is some cases
+        # Todo: Adjust initRT = NaN is some cases (when doing diffusion model)
         # initRT = RT was added after HH confetti pilot
         # for cases in which button is pressed very quickly
         # if not np.sum(np.isnan(df_subj["initRT"])) == 0:
