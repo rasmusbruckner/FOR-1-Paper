@@ -5,21 +5,26 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
-from pycircstat2.utils import angular_distance
-
-from sklearn.preprocessing import StandardScaler
 import statsmodels.api as sm
+from allinpy import cm2inch
+from pandas.testing import assert_frame_equal
+from pycircstat2.utils import angular_distance
+from sklearn.preprocessing import StandardScaler
 
-from all_in import cm2inch
 
-
-def safe_save_dataframe(dataframe: pd.DataFrame) -> None:
+def safe_save_dataframe(
+    dataframe: pd.DataFrame, data_dir: str = "for_data/", print_action: str = True
+) -> None:
     """Saves a data frame and ensures that values don't change unexpectedly.
 
     Parameters
     ----------
     dataframe : pandas.DataFrame
         Data frame to be saved.
+    data_dir : str
+        Data directory, defaults to "for_data/".
+    print_action : bool
+        Whether action should be printed, defaults to True.
 
     Returns
     -------
@@ -34,7 +39,7 @@ def safe_save_dataframe(dataframe: pd.DataFrame) -> None:
     # ---------------------------------
 
     # File path
-    df_name = "for_data/" + dataframe.name + ".pkl"
+    df_name = data_dir + dataframe.name + ".pkl"
 
     # Check if file exists
     path_exist = os.path.exists(df_name)
@@ -46,18 +51,55 @@ def safe_save_dataframe(dataframe: pd.DataFrame) -> None:
     # If we have the file already, check if as expected
     if path_exist:
         # Test if equal and save data
-        same = dataframe.equals(expected_df)
-        print("\nActual and expected " + dataframe.name + " equal:", same, "\n")
+        same = frames_equal(dataframe, expected_df, rtol=1e-12, atol=1e-12)
+        if print_action:
+            print("\nActual and expected " + dataframe.name + " equal:", same, "\n")
 
     # If new, we'll create the file
     else:
         same = True
-        dataframe.to_pickle("for_data/" + dataframe.name + ".pkl")
-        print("\nCreating new data frame: " + dataframe.name + "\n")
+        dataframe.to_pickle(df_name)
+        if print_action:
+            print("\nCreating new data frame: " + dataframe.name + "\n")
 
     if not same:
-        dataframe.to_pickle("for_data/" + dataframe.name + "_unexpected.pkl")
-        print("\nCreating new data frame: " + dataframe.name + "_unexpected.pkl" + "\n")
+        df_name = df_name.replace(".pkl", "_unexpected.pkl")
+        dataframe.name = dataframe.name + "_unexpected"
+        dataframe.to_pickle(df_name)
+        if print_action:
+            print("\nCreating new data frame: " + dataframe.name + "\n")
+
+
+def frames_equal(df1: pd.DataFrame, df2: pd.DataFrame, **kwargs) -> bool:
+    """Checks if two data frames are equal.
+
+    This function is a wrapper around `assert_frame_equal` from pandas. We can use different
+    tolerances to ignore small differences due to floating point arithmetic, e.g., rtol=1e-12.
+    When a difference is found, the function prints the differences.
+
+    Parameters
+    ----------
+    df1 : pd.DataFrame
+    df2 : pd.DataFrame
+    kwargs : mapping
+        rtol : float
+            Relative tolerance.
+        atol : float
+            Absolute tolerance.
+
+    Returns
+    -------
+    bool
+        True if data frames are equal, False otherwise.
+    """
+
+    try:
+        assert_frame_equal(df1, df2, **kwargs)
+        return True
+    except AssertionError as e:
+        print("DIFFERENCES FOUND:\n")
+        print(e)
+        return False
 
 
 def recovery_summary(
@@ -114,7 +156,7 @@ def recovery_summary(
 
 
 def get_sim_est_err(df_subj: pd.DataFrame, df_data: pd.DataFrame) -> float:
-    """This function computes the simulated estimation errors.
+    """Computes the simulated estimation errors.
 
     Parameters
     ----------
@@ -146,6 +188,57 @@ def get_sim_est_err(df_subj: pd.DataFrame, df_data: pd.DataFrame) -> float:
     return sim_est_err
 
 
+def plot_correlation(
+    df_questionnaires: pd.DataFrame,
+    df_dependent: pd.DataFrame,
+    x_var_name: str,
+    xlabel: str,
+    ylabel: str,
+) -> None:
+    """Plots questionnaire correlations with learning parameters.
+
+    Parameters
+    ----------
+    df_questionnaires : pd.DataFrame
+        Questionnaire data frame.
+    df_dependent : pd.DataFrame
+        Dependent variable.
+    x_var_name : str
+        Name of independent variable.
+    xlabel : str
+        X-axis label.
+    ylabel : str
+        Y-axis label.
+
+    Returns
+    -------
+    None
+        This function does not return any value.
+    """
+
+    # Scatter plot of single subjects
+    plt.scatter(df_questionnaires[[x_var_name]], df_dependent, alpha=0.6)
+
+    # Fit a line
+    slope, intercept = np.polyfit(df_questionnaires[x_var_name], df_dependent, 1)
+    plt.plot(
+        df_questionnaires[x_var_name],
+        slope * df_questionnaires[x_var_name] + intercept,
+        color="red",
+    )
+
+    # Compute correlation and put in title
+    r, p = stats.pearsonr(df_questionnaires[x_var_name], df_dependent.iloc[:, 0])
+
+    # Add labels and title
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(f"r = {r:.3f}, p = {p:.3f}")
+
+    # Delete unnecessary axes
+    sns.despine()
+
+
 def plot_robust_regression(
     df_questionnaires: pd.DataFrame,
     df_dependent: pd.DataFrame,
@@ -154,7 +247,7 @@ def plot_robust_regression(
     ylabel: str,
     use_corr: bool = False,
 ) -> None:
-    """This function plots questionnaire correlations with learning parameters.
+    """Plots questionnaire correlations with learning parameters.
 
     Parameters
     ----------
@@ -274,7 +367,7 @@ def plot_main_questionnaire_correlations(
     fig_height: int = 10,
     use_corr: bool = False,
 ) -> None:
-    """This function plots questionnaire correlations with learning parameters.
+    """Plots questionnaire correlations with learning parameters.
 
     Parameters
     ----------
@@ -381,7 +474,7 @@ def plot_idas_correlations(
     fig_height: int = 20,
     use_corr: bool = False,
 ) -> None:
-    """This function plots IDAS subscale correlations with learning parameters.
+    """Plots IDAS subscale correlations with learning parameters.
 
     Parameters
     ----------
@@ -584,7 +677,7 @@ def plot_questionnaire_correlations_noise(
     fig_height: int = 10,
     use_corr: bool = False,
 ) -> None:
-    """This function plot correlations separately for the low- and high-noise conditions.
+    """Plots correlations separately for the low- and high-noise conditions.
 
     Parameters
     ----------
