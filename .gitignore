@@ -8,3 +8,11 @@ __pycache__/
 figures/
 
 for_data/sca/
+
+for_data/sim_sca/
+
+for_data/sca_simulated_regression/
+
+for_data/FA_full_Specs/.DS_Store
+
+for_data/sca_temp/

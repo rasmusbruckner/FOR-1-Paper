@@ -20,7 +20,8 @@ def simulation(
     df_model: pd.DataFrame,
     n_subj: int,
     plot_data: bool = False,
-    sim: bool = True,
+    sim: str | bool = "agent",
+    mixture: bool = False,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """This function simulates data using the RBM model.
 
@@ -34,15 +35,19 @@ def simulation(
         Number of participants.
     plot_data : bool
         Indicates if single-trial plots for updates and predictions should be generated.
-    sim : bool
-        Indicates if prediction errors are simulated or not.
+    sim : str | bool
+        agent = simulate agent predictions based on empirical task data (default).
+        task_agent = simulate agent predictions based on simulated task data.
+        False = no simulation, only likelihood evaluation for empirical task data.
+    mixture : bool
+        Indicates whether to use mixture model or not (default: False).
 
     Returns
     -------
     pd.DataFrame
         sim_est_err with simulated estimation errors.
     pd.DataFrame
-         df_sim with simulation results.
+        df_sim with simulation results.
     pd.DataFrame
         true_params with true parameters.
     """
@@ -59,6 +64,7 @@ def simulation(
     agent_vars = AgentVars()
     agent_vars.max_x = 2 * np.pi
     agent_vars.mu_0 = 0
+    agent_vars.circular = True  # ensure we use the circular model version
 
     # Initialize data frame for data that will be recovered
     df_sim = pd.DataFrame()
@@ -66,7 +72,7 @@ def simulation(
     # Initialize data frame for estimation errors
     sim_est_err = pd.DataFrame(columns=["main"], index=np.arange(n_subj), dtype=float)
 
-    # Initialize true param
+    # Initialize true params
     true_params = np.nan
 
     # Cycle over participants
@@ -87,7 +93,18 @@ def simulation(
 
         # Select relevant variables from parameter data frame
         sel_coeffs = (
-            sel_coeffs[["omikron_0", "omikron_1", "h", "s", "u", "sigma_H"]]
+            sel_coeffs[
+                [
+                    "omikron_0",
+                    "omikron_1",
+                    "lambda_0",
+                    "lambda_1",
+                    "h",
+                    "s",
+                    "u",
+                    "sigma_H",
+                ]
+            ]
             .iloc[0]
             .to_dict()
         )
@@ -104,23 +121,31 @@ def simulation(
             6.1875  # due to his initRU settings that I recomputed to sigma_0
         )
 
-        # Ensure we use the circular model version
-        agent_vars.circular = True
-
         # Agent object
         agent = AlAgent(agent_vars)
 
         # Run task-agent interaction
-        _, df_data = task_agent_int(df_subj, agent, agent_vars, sel_coeffs, sim=sim)
+        _, df_data = task_agent_int(
+            df_subj, agent, agent_vars, sel_coeffs, sim=sim, mixture=mixture
+        )
 
         # Record subject number
         df_data["subj_num"] = i + 1
+
+        # Record ID
+        if i < 10:
+            df_data["ID"] = f"sim_00{i}"
+        elif 10 <= i < 100:
+            df_data["ID"] = f"sim_0{i}"
+        else:
+            df_data["ID"] = f"sim_{i}"
 
         # Add data to data frame
         df_sim = pd.concat([df_sim, df_data], ignore_index=True)
 
         # Plot for qualitative checks
         if plot_data:
+
             # Plot updates
             plt.figure()
             plt.plot(np.arange(len(df_subj["a_t_rad"])), df_subj["a_t_rad"])
@@ -134,16 +159,12 @@ def simulation(
 
             # Plot predictions
             plt.figure()
-
-            # Correct for circular issues
-            wrapped_outcomes = np.mod(df_subj["x_t_rad"] + np.pi, 2 * np.pi)
-            wrapped_pred = np.mod(df_subj["b_t_rad"] + np.pi, 2 * np.pi)
-            wrapped_sim_pred = np.mod(df_data["sim_b_t_rad"] + np.pi, 2 * np.pi)
-
-            plt.plot(np.arange(len(df_subj["x_t_rad"])), wrapped_outcomes, ".")
-            plt.plot(np.arange(len(df_subj["b_t_rad"])), wrapped_pred, ".")
-            plt.plot(np.arange(len(df_data["sim_b_t_rad"])), wrapped_sim_pred, ".")
-            plt.legend(["x_t_rad", "b_t_rad", "sim_b_t_rad"], loc=1, framealpha=0.8)
+            plt.plot(np.arange(len(df_subj["mu_t_rad"])), df_subj["mu_t_rad"], "-")
+            plt.plot(np.arange(len(df_subj["b_t_rad"])), df_subj["b_t_rad"], ".")
+            plt.plot(np.arange(len(df_data["sim_b_t_rad"])), df_data["sim_b_t_rad"], ".")
+            plt.legend(
+                ["mu_t_rad", "b_t_rad", "sim_b_t_rad"], loc=1, framealpha=0.8
+            )
 
             # Save the plot
             savename = "figures/single_trial/bel_%s.pdf" % i
@@ -152,7 +173,7 @@ def simulation(
 
         # Extract estimation error
         if sim:
-            sim_est_err_main = get_sim_est_err(df_subj, df_data)
+            sim_est_err_main, _ = get_sim_est_err(df_subj, df_data)
             sim_est_err.loc[i, "main"] = sim_est_err_main
 
         # Update progress bar
@@ -170,7 +191,8 @@ def simulation_loop(
     df_model: pd.DataFrame,
     n_subj: int,
     plot_data: bool = False,
-    sim: bool = False,
+    sim: str | bool = False,
+    mixture: bool = False,
     n_sim: int = 10,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """This function runs the simulation across multiple cycles.
@@ -185,8 +207,12 @@ def simulation_loop(
         Number of participants.
     plot_data : bool
         Indicates if single-trial plots for updates and predictions should be generated.
-    sim : bool
-        Indicates if prediction errors are simulated or not.
+    sim : str | bool
+        False = no simulation, only likelihood evaluation for empirical task data (default).
+        agent = simulate agent predictions based on empirical task data.
+        task_agent = simulate agent predictions based on simulated task data.
+    mixture : bool
+        Indicates if simulation should be mixture model with perseveration (default: False).
     n_sim : int
         Number of simulations.
 
@@ -207,7 +233,7 @@ def simulation_loop(
 
         # Simulate the data
         sim_est_err, df_sim, _ = simulation(
-            df_exp, df_model, n_subj, plot_data=plot_data, sim=sim
+            df_exp, df_model, n_subj, plot_data=plot_data, sim=sim, mixture=mixture
         )
 
         # Put all data in data frame for estimation errors

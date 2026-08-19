@@ -27,11 +27,18 @@ if __name__ == "__main__":
     import pandas as pd
 
     from FOR_1_Paper.for_utilities import plot_correlation
-    from FOR_1_Paper.sca.sca_utils import correlate_reg_fa, filter_subjects
+    from FOR_1_Paper.sca.SpecificationCurveAnalysis import SpecificationCurveAnalysis
 
     # ----------
     # Load data
     # ---------
+
+    # -----------------
+    # Create SCA object
+    # -----------------
+
+    sca = SpecificationCurveAnalysis()
+
     # Parameter space of factor analysis
     param_space = {
         "analysis_type": ["simple", "bifactor"],
@@ -66,21 +73,21 @@ if __name__ == "__main__":
     }
 
     # Load data of best regression model
-    df_regression = pd.read_pickle("for_data/regression_model_2_3_50_sp.pkl")
+    df_regression = pd.read_pickle("for_data/regression_23_50sp.pkl")
 
     # Load data for regression applied separately for low and high noise
     df_regression_low_noise = pd.read_pickle(
-        "for_data/regression_model_low_noise_2_3_50_sp.pkl"
+        "for_data/regression_low_noise_23_50sp.pkl"
     )
     df_regression_high_noise = pd.read_pickle(
-        "for_data/regression_model_high_noise_2_3_50_sp.pkl"
+        "for_data/regression_high_noise_23_50sp.pkl"
     )
     # Filter datasets to ensure they match
-    df_sca_fa, df_reg, fa_hash = filter_subjects(analysis_spec, df_regression)
+    static_filename = "for_data/sca_fa_"
+    df_sca_fa, df_reg, fa_hash = sca.filter_subjects(analysis_spec, df_regression)
 
     # Estimation error
     # ----------------
-    # Todo: we will integrate EE into the SCA. Then, we can use shared functions
 
     # Load data excluding change points for estimation errors
     df_for = pd.read_pickle("for_data/data_prepr_model.pkl")
@@ -124,17 +131,16 @@ if __name__ == "__main__":
     # Create figure
     plt.figure(figsize=cm2inch(fig_width, fig_height))
 
-    plt.subplot(131)
+    ax_00 = plt.subplot(131)
     plot_correlation(
-        df_sca_fa,
-        df_reg[[which_var]],
+        df_sca_fa[factor_name],
+        df_reg[which_var],
         factor_name,
-        factor_name,
-        "Fixed Learning Rate",
+        "Fixed Learning Rate", ax=ax_00
     )
 
     # Check if SCA would compute the same correlation
-    analysis_result_fixed_lr, _, _, _ = correlate_reg_fa(
+    analysis_result_fixed_lr, _, _, _ = sca.correlate_reg_fa(
         which_factor, fa_hash, df_sca_fa, df_reg, which_var
     )
     print(analysis_result_fixed_lr)
@@ -145,29 +151,27 @@ if __name__ == "__main__":
     # Select adaptive learning rate
     which_var = "beta_4"
 
-    plt.subplot(132)
+    ax_01 = plt.subplot(132)
     plot_correlation(
-        df_sca_fa,
-        df_reg[[which_var]],
+        df_sca_fa[factor_name],
+        df_reg[which_var],
         factor_name,
-        factor_name,
-        "Adaptive Learning Rate",
+        "Adaptive Learning Rate", ax=ax_01
     )
     # Check if SCA would compute the same correlation
-    analysis_result_fixed_lr, _, _, _ = correlate_reg_fa(
+    analysis_result_fixed_lr, _, _, _ = sca.correlate_reg_fa(
         which_factor, fa_hash, df_sca_fa, df_reg, which_var
     )
     print(analysis_result_fixed_lr)
 
     # Estimation error
     # ----------------
-    plt.subplot(133)
+    ax_02 = plt.subplot(133)
     plot_correlation(
-        df_sca_fa,
-        mean_per_subject[["e_t"]],
+        df_sca_fa[factor_name],
+        mean_per_subject["e_t"],
         factor_name,
-        factor_name,
-        "Estimation Error",
+        "Estimation Error", ax=ax_02,
     )
 
     plt.tight_layout()

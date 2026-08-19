@@ -118,8 +118,8 @@ class RegressionFor(RegressionParent):
         reg_df["alpha_t"] = df["alpha_t"].to_numpy() * df["delta_t_rad"].to_numpy()
         reg_df["r_t"] = df["hit_dummy"].to_numpy() * df["delta_t_rad"].to_numpy()
         reg_df["sigma_t"] = df["kappa_dummy"].to_numpy() * df["delta_t_rad"].to_numpy()
-        reg_df["vis_delta"] = df["v_t"].to_numpy() * df["delta_t_rad"].to_numpy()
-        reg_df["vis_est"] = df["v_t"].to_numpy() * df["e_t_rad"].to_numpy()
+        reg_df["vis_delta"] = df["v_dummy"].to_numpy() * df["delta_t_rad"].to_numpy()
+        reg_df["vis_est"] = df["v_dummy"].to_numpy() * df["e_t_rad"].to_numpy()
         reg_df["a_t"] = df["a_t_rad"].to_numpy()
         reg_df["group"] = df["group"].to_numpy()
         reg_df["subj_num"] = df["subj_num"].to_numpy()
@@ -224,7 +224,7 @@ class RegressionFor(RegressionParent):
                     {
                         "delta_t_rad": np.random.uniform(-np.pi, np.pi, n_trials),
                         "e_t_rad": np.random.uniform(-np.pi, np.pi, n_trials),
-                        "v_t": np.random.binomial(1, 0.1, n_trials),
+                        "v_dummy": np.random.binomial(1, 0.1, n_trials),
                         "hit_dummy": np.random.binomial(1, 0.5, n_trials),
                         "kappa_dummy": np.concatenate(
                             [np.zeros(n_trials // 2), np.ones(n_trials // 2)]
@@ -256,7 +256,7 @@ class RegressionFor(RegressionParent):
                     {
                         "delta_t_rad": sub_behav_data["delta_t_rad"],
                         "e_t_rad": sub_behav_data["e_t_rad"],
-                        "v_t": sub_behav_data["v_t"],
+                        "v_dummy": sub_behav_data["v_t"],
                         "hit_dummy": sub_behav_data["hit_dummy"],
                         "kappa_dummy": sub_behav_data["kappa_dummy"],
                         "tau_t": sub_behav_data["tau_t"],
@@ -292,18 +292,12 @@ class RegressionFor(RegressionParent):
             # Predicted updates
             a_t_hat = lr_mat @ np.array(update_regressors)
 
-            # Residuals
-            if self.which_vars["omikron_1"]:
+            # Compute updating noise
+            concentration = residual_fun(
+                np.abs(a_t_hat), sel_coeffs["omikron_0"], sel_coeffs["omikron_1"]
+            )
 
-                # Compute updating noise
-                concentration = residual_fun(
-                    np.abs(a_t_hat), sel_coeffs["omikron_0"], sel_coeffs["omikron_1"]
-                )
-
-            else:
-                # Motor noise only
-                concentration = np.repeat(sel_coeffs["omikron_0"], len(a_t_hat))
-
+            # Perseveration probability
             if self.which_vars["lambda_0"] and not self.which_vars["lambda_1"]:
 
                 # Compute perseveration probability
@@ -318,7 +312,7 @@ class RegressionFor(RegressionParent):
 
                 # Compute perseveration probability
                 pers_prob = compute_persprob(
-                    sel_coeffs["lambda_0"], sel_coeffs["lambda_1"], abs(a_t_hat)
+                    sel_coeffs["lambda_0"], sel_coeffs["lambda_1"], abs(np.rad2deg(a_t_hat))
                 )
                 pers = np.random.binomial(size=len(a_t_hat), n=1, p=pers_prob)
                 a_t_hat[pers == 1] = 0

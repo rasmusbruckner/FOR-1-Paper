@@ -104,7 +104,7 @@ if __name__ == "__main__":
     model_1_1 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_1_1.name = "regression_model_1_1_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_1_1.name = "regression_11_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_1_1)
 
     # 1.2) Fixed LR + omega_t
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     model_1_2 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_1_2.name = "regression_model_1_2_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_1_2.name = "regression_12_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_1_2)
 
     # 1.3) Fixed LR + omega + tau
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     model_1_3 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_1_3.name = "regression_model_1_3_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_1_3.name = "regression_13_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_1_3)
 
     # 1.4) Fixed LR + omega + tau + hit
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     model_1_4 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_1_4.name = "regression_model_1_4_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_1_4.name = "regression_14_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_1_4)
 
     # 1.5) Fixed LR + omega + tau + hit + noise
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     model_1_5 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_1_5.name = "regression_model_1_5_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_1_5.name = "regression_15_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_1_5)
 
     # 1.6) Fixed LR + omega + tau + hit + noise + catch trial ("full model")
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     model_1_6 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_1_6.name = "regression_model_1_6_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_1_6.name = "regression_16_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_1_6)
 
     # 2.1) Fixed LR + adaptive LR
@@ -368,7 +368,7 @@ if __name__ == "__main__":
     model_2_1 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_2_1.name = "regression_model_2_1_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_2_1.name = "regression_21_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_2_1)
 
     # 2.2) Fixed LR + adaptive LR + hit
@@ -412,7 +412,7 @@ if __name__ == "__main__":
     model_2_2 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_2_2.name = "regression_model_2_2_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_2_2.name = "regression_22_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_2_2)
 
     # 2.3) Fixed LR + adaptive LR + hit + noise
@@ -456,7 +456,7 @@ if __name__ == "__main__":
     model_2_3 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_2_3.name = "regression_model_2_3_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_2_3.name = "regression_23_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_2_3)
 
     # 2.4) Fixed LR + adaptive LR + hit + noise + catch trial
@@ -500,7 +500,7 @@ if __name__ == "__main__":
     model_2_4 = for_regression.parallel_estimation(
         df_for, prior_columns
     )  # run regression
-    model_2_4.name = "regression_model_2_4_" + str(reg_vars.n_sp) + "_sp"  # save data
+    model_2_4.name = "regression_24_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_2_4)
 
     # --------------------------------
@@ -595,9 +595,7 @@ if __name__ == "__main__":
     model_2_3 = for_regression.parallel_estimation(
         df_for_low_noise, prior_columns
     )  # run regression
-    model_2_3.name = (
-        "regression_model_low_noise_2_3_" + str(reg_vars.n_sp) + "_sp"
-    )  # save data
+    model_2_3.name = "regression_low_noise_23_" + str(reg_vars.n_sp) + "sp"  # save data
     safe_save_dataframe(model_2_3)
 
     # High noise
@@ -606,7 +604,7 @@ if __name__ == "__main__":
         df_for_high_noise, prior_columns
     )  # run regression
     model_2_3.name = (
-        "regression_model_high_noise_2_3_" + str(reg_vars.n_sp) + "_sp"
+        "regression_high_noise_23_" + str(reg_vars.n_sp) + "sp"
     )  # save data
     safe_save_dataframe(model_2_3)
 

@@ -1,4 +1,5 @@
 import os
+from typing import Any, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +8,8 @@ import scipy.stats as stats
 import seaborn as sns
 import statsmodels.api as sm
 from allinpy import cm2inch
+from matplotlib.axes import Axes
+from numpy import floating, ndarray
 from pandas.testing import assert_frame_equal
 from pycircstat2.utils import angular_distance
 from sklearn.preprocessing import StandardScaler
@@ -155,53 +158,20 @@ def recovery_summary(
     plt.tight_layout()
 
 
-def get_sim_est_err(df_subj: pd.DataFrame, df_data: pd.DataFrame) -> float:
-    """Computes the simulated estimation errors.
-
-    Parameters
-    ----------
-    df_subj : pd.DataFrame
-        Subject data with ground truth mu.
-    df_data : pd.DataFrame
-        Simulated data with mu estimates.
-
-    Returns
-    -------
-    float
-        Mean simulated estimation error w/o change-point trials.
-    """
-
-    # Extract no-changepoint trials
-    no_cp = df_subj["c_t"].to_numpy() == 0
-
-    # Extract true helicopter location for estimation-error computation
-    real_mu = df_subj["mu_t_rad"].to_numpy()
-
-    # Extract model prediction for estimation-error computation
-    sim_pred = df_data["sim_b_t_rad"].to_numpy()
-
-    # Compute estimation error
-    sim_est_err_all = angular_distance(real_mu, sim_pred)
-    sim_est_err_nocp = sim_est_err_all[no_cp]  # estimation error without change points
-    sim_est_err = np.mean(abs(sim_est_err_nocp))
-
-    return sim_est_err
-
-
 def plot_correlation(
-    df_questionnaires: pd.DataFrame,
-    df_dependent: pd.DataFrame,
-    x_var_name: str,
+    df_questionnaires: Union[pd.DataFrame, np.ndarray],
+    df_dependent: Union[pd.DataFrame, np.ndarray],
     xlabel: str,
     ylabel: str,
+    ax: Axes = None,
 ) -> None:
     """Plots questionnaire correlations with learning parameters.
 
     Parameters
     ----------
-    df_questionnaires : pd.DataFrame
-        Questionnaire data frame.
-    df_dependent : pd.DataFrame
+    df_questionnaires : pd.DataFrame or np.ndarray
+        Questionnaire data.
+    df_dependent : pd.DataFrame or np.ndarray
         Dependent variable.
     x_var_name : str
         Name of independent variable.
@@ -209,6 +179,8 @@ def plot_correlation(
         X-axis label.
     ylabel : str
         Y-axis label.
+    ax : Axes, optional
+        Subplot axes.
 
     Returns
     -------
@@ -216,24 +188,28 @@ def plot_correlation(
         This function does not return any value.
     """
 
+    if ax is None:
+        plt.figure()
+        ax = plt.gca()
+
     # Scatter plot of single subjects
-    plt.scatter(df_questionnaires[[x_var_name]], df_dependent, alpha=0.6)
+    ax.scatter(df_questionnaires, df_dependent, alpha=0.6)
 
     # Fit a line
-    slope, intercept = np.polyfit(df_questionnaires[x_var_name], df_dependent, 1)
-    plt.plot(
-        df_questionnaires[x_var_name],
-        slope * df_questionnaires[x_var_name] + intercept,
+    slope, intercept = np.polyfit(df_questionnaires, df_dependent, 1)
+    ax.plot(
+        df_questionnaires,
+        slope * df_questionnaires + intercept,
         color="red",
     )
 
     # Compute correlation and put in title
-    r, p = stats.pearsonr(df_questionnaires[x_var_name], df_dependent.iloc[:, 0])
+    r, p = stats.pearsonr(df_questionnaires, df_dependent)
 
     # Add labels and title
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(f"r = {r:.3f}, p = {p:.3f}")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(f"$r$ = {r:.2f}, $p$ = {p:.2f}")
 
     # Delete unnecessary axes
     sns.despine()
@@ -247,7 +223,7 @@ def plot_robust_regression(
     ylabel: str,
     use_corr: bool = False,
 ) -> None:
-    """Plots questionnaire correlations with learning parameters.
+    """Plots questionnaire correlations with learning parameters based on robust regression.
 
     Parameters
     ----------
@@ -775,3 +751,158 @@ def plot_questionnaire_correlations_noise(
 
     # Delete unnecessary axes
     plt.tight_layout()
+
+
+def get_sim_est_err(
+    df_subj: pd.DataFrame, df_data: pd.DataFrame
+) -> tuple[floating[Any], ndarray]:
+    """Computes the simulated estimation errors.
+
+    Parameters
+    ----------
+    df_subj : pd.DataFrame
+        Subject data with ground-truth mu.
+    df_data : pd.DataFrame
+        Simulated data with mu estimates.
+
+    Returns
+    -------
+    float
+        Mean simulated estimation error w/o change-point trials.
+    """
+
+    # Extract no-change-point trials
+    no_cp = df_subj["c_t"].to_numpy() == 0
+
+    # Extract true mu for estimation-error computation
+    real_mu = df_subj["mu_t_rad"].to_numpy()
+
+    # Extract model prediction for estimation-error computation
+    sim_pred = df_data["sim_b_t_rad"].to_numpy()
+
+    # Compute estimation error
+    sim_est_err_all = angular_distance(real_mu, sim_pred)
+    sim_est_err_nocp = sim_est_err_all[no_cp]  # estimation error without change points
+    sim_est_err_mean = np.mean(sim_est_err_nocp)
+
+    return sim_est_err_mean, sim_est_err_all
+
+
+def swarm_barplot(data: pd.DataFrame, y: str, ax: Axes, x="None") -> None:
+    """Barplot with error bars and individual data points
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Data for plot.
+    y : str
+        Variable name.
+    ax : Axes
+        Plot axis.
+    x : str, optional
+        Optional x-axis variable name, by default "None.
+
+    Returns
+    -------
+    None
+        This function does not return any value.
+    """
+    if not x == "None":
+
+        # Draw barplot
+        ax = sns.barplot(
+            x=x,
+            y=y,
+            data=data,
+            errorbar="se",
+            color="#1f77b4",
+            alpha=0.8,
+            ax=ax,
+        )
+
+        # Overlay individual data points using stripplot
+        sns.stripplot(
+            x=x,
+            y=y,
+            data=data,
+            color="k",
+            alpha=1,
+            jitter=0.2,
+            size=2,
+            ax=ax,
+        )
+    else:
+
+        ax = sns.barplot(
+            y=y,
+            data=data,
+            errorbar="se",
+            color="#1f77b4",
+            alpha=0.8,
+            ax=ax,
+        )
+
+        # Overlay individual data points using stripplot
+        sns.stripplot(
+            y=y,
+            data=data,
+            color="k",
+            alpha=1,
+            jitter=0.2,
+            size=2,
+            ax=ax,
+        )
+
+
+def plot_param(
+    label: str,
+    name: str,
+    true_params: pd.DataFrame,
+    recovered_params: pd.DataFrame,
+    label_recovered=None,
+    reg_line=False,
+) -> None:
+    """
+
+    Parameters
+    ----------
+    label : str
+        Parameter name in the models (e.g., "beta_1").
+    name : str
+        Parameter name in the plot (e.g., "Fixed learning rate").
+    true_params : pd.DataFrame
+        True parameters.
+    recovered_params : pd.DataFrame
+        Recovered parameters.
+    label_recovered : str, optional
+        Optional label for recovered parameters, by default None.
+    reg_line : bool, optional
+        For plotting a regression line, by default False.
+
+    Returns
+    -------
+    None
+        This function does not return any value.
+    """
+
+    if label_recovered is None:
+        label_recovered = label
+
+    if not reg_line:
+        plt.plot(
+            true_params[label].values,
+            recovered_params[label_recovered].values,
+            ".",
+            color="k",
+        )
+    else:
+        sns.regplot(
+            x=true_params[label].values,
+            y=recovered_params[label_recovered].values,
+            scatter_kws={"s": 10, "color": "black"},
+            line_kws={"color": "blue"},
+        )
+    r, _ = stats.spearmanr(
+        true_params[label].values, recovered_params[label_recovered].values
+    )
+    plt.title(f"{name}$r=${round(r, 2)}")

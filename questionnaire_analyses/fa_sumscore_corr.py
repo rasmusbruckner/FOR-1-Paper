@@ -24,7 +24,6 @@ if __name__ == "__main__":
     from pathlib import Path
 
     import matplotlib.pyplot as plt
-    import numpy as np
     import pandas as pd
     import scipy.stats as stats
     import seaborn as sns
@@ -32,22 +31,24 @@ if __name__ == "__main__":
     from tqdm import tqdm
 
     from FOR_1_Paper.for_utilities import safe_save_dataframe
-    from FOR_1_Paper.sca.sca_utils import (build_specs_with_vars,
-                                           fa_candidates, filter_subjects)
+    from FOR_1_Paper.sca.SpecificationCurveAnalysis import (
+        SpecificationCurveAnalysis, fa_candidates)
 
     # ------------
     # 1. Load data
     # ------------
-
-    df_for = pd.read_pickle("for_data/data_prepr_model.pkl")
-    df_for = df_for.dropna(subset=["delta_t_rad", "a_t_rad"]).reset_index()  # drop nans
-    n_subj = len(np.unique(df_for["subj_num"]))  # number of subjects
 
     # SCA folder
     folder = Path("for_data")
 
     df_questionnaires = pd.read_pickle("for_data/questionnaire_sumscores.pkl")
     df_questionnaires = df_questionnaires.sort_values(by=["subj_num"])
+
+    # -----------------
+    # Create SCA object
+    # -----------------
+
+    sca = SpecificationCurveAnalysis()
 
     # ------------------------------
     # Factor analysis specifications
@@ -71,6 +72,9 @@ if __name__ == "__main__":
     # Analysis specifications based on our parameter space
     pool = list(fa_candidates(param_space))
 
+    # Add pool to SCA instance
+    sca.pool = pool
+
     # Take into account all factors
     # -----------------------------
 
@@ -81,17 +85,16 @@ if __name__ == "__main__":
         ],
     }
 
+    # Add rules and rule names to SCA object instance
+    sca.var_names = var_rule_ids
+    sca.var_rules = var_rules
+
     # Create analysis specifications based on pool and variable rules
-    analysis_specs = build_specs_with_vars(pool, var_rule_ids, var_rules)
+    analysis_specs = sca.build_specs_with_vars()
 
     # ------------------------
     # Run correlation analyses
     # ------------------------
-
-    # Ensure that we have an empty folder w/o any previous results
-    os.makedirs("for_data/sca", exist_ok=True)
-    for f in os.listdir("for_data/sca/"):
-        os.remove(os.path.join("for_data/sca/", f))
 
     # Initialize progress bar
     pbar = tqdm(total=len(analysis_specs.items()))
@@ -110,7 +113,7 @@ if __name__ == "__main__":
         df_questionnaires = df_questionnaires.rename(columns={"subj_num": "ID"})
 
         # Filter subjects
-        df_factor_analysis, df_questionnaires, fa_hash = filter_subjects(
+        df_factor_analysis, df_questionnaires, fa_hash = sca.filter_subjects(
             analysis_spec, df_questionnaires
         )
 
@@ -132,7 +135,7 @@ if __name__ == "__main__":
         # Get factor columns (all except ID)
         factor_cols = [col for col in df_factor_analysis.columns if col != "ID"]
 
-        # Get questionnaire columns (all except 'ID')
+        # Get questionnaire columns (all except ID)
         questionnaire_cols = [
             col
             for col in df_questionnaires.columns

@@ -8,31 +8,35 @@ from time import sleep
 import numpy as np
 import pandas as pd
 from allinpy import callback
-from rbmpy import AlAgent
+from rbmpy import AlAgent, AgentVars
 from rbmpy.utilities import compute_bic, get_sel_coeffs
 from scipy.optimize import minimize
 from scipy.stats import norm
-from task_agent_int_rbm import task_agent_int
+from FOR_1_Paper.modeling.task_agent_int_rbm import task_agent_int
+from FOR_1_Paper.modeling.ForEstVars import ForEstVars
+
 from tqdm import tqdm
 
 
 class ForEstimation:
     """Specifies the instance variables and methods of the parameter estimation."""
 
-    def __init__(self, est_vars: "EstVars"):
+    def __init__(self, est_vars: ForEstVars):
         """Defines the instance variables unique to each instance.
 
         See ForEstVars for documentation.
 
         Parameters
         ----------
-        est_vars : "EstVars"
+        est_vars : ForEstVars
             Estimation variables object instance.
         """
 
         # Parameter names for data frame
         self.omikron_0 = est_vars.omikron_0
         self.omikron_1 = est_vars.omikron_1
+        self.lambda_0 = est_vars.lambda_0
+        self.lambda_1 = est_vars.lambda_1
         self.h = est_vars.h
         self.s = est_vars.s
         self.u = est_vars.u
@@ -41,6 +45,8 @@ class ForEstimation:
         # Select fixed staring points (used if not rand_sp)
         self.omikron_0_x0 = est_vars.omikron_0_x0
         self.omikron_1_x0 = est_vars.omikron_1_x0
+        self.lambda_0_x0 = est_vars.lambda_0_x0
+        self.lambda_1_x0 = est_vars.lambda_1_x0
         self.h_x0 = est_vars.h_x0
         self.s_x0 = est_vars.s_x0
         self.u_x0 = est_vars.u_x0
@@ -49,6 +55,8 @@ class ForEstimation:
         # Select range of random starting point values (if rand_sp)
         self.omikron_0_x0_range = est_vars.omikron_0_x0_range
         self.omikron_1_x0_range = est_vars.omikron_1_x0_range
+        self.lambda_0_x0_range = est_vars.lambda_0_x0_range
+        self.lambda_1_x0_range = est_vars.lambda_1_x0_range
         self.h_x0_range = est_vars.h_x0_range
         self.s_x0_range = est_vars.s_x0_range
         self.u_x0_range = est_vars.u_x0_range
@@ -57,6 +65,8 @@ class ForEstimation:
         # Select boundaries for estimation
         self.omikron_0_bnds = est_vars.omikron_0_bnds
         self.omikron_1_bnds = est_vars.omikron_1_bnds
+        self.lambda_0_bnds = est_vars.lambda_0_bnds
+        self.lambda_1_bnds = est_vars.lambda_1_bnds
         self.h_bnds = est_vars.h_bnds
         self.s_bnds = est_vars.s_bnds
         self.u_bnds = est_vars.u_bnds
@@ -76,7 +86,7 @@ class ForEstimation:
         self.use_prior = est_vars.use_prior
 
     def parallel_estimation(
-        self, df: pd.DataFrame, agent_vars: "AgentVArs"
+        self, df: pd.DataFrame, agent_vars: AgentVars
     ) -> pd.DataFrame:
         """This function manages the parallelization of the model estimation.
 
@@ -84,7 +94,7 @@ class ForEstimation:
         ----------
         df : pd.DataFrame
             Data frame containing the data.
-        agent_vars : "AgentVars"
+        agent_vars : AgentVars
             Agent variables object instance.
 
         Returns
@@ -122,6 +132,8 @@ class ForEstimation:
         prior_columns = [
             self.omikron_0,
             self.omikron_1,
+            self.lambda_0,
+            self.lambda_1,
             self.h,
             self.s,
             self.u,
@@ -133,6 +145,8 @@ class ForEstimation:
         columns.append("llh")
         columns.append("BIC")
         columns.append("subj_num")
+        columns.append("ID")
+        columns.append("group")
         results_df = pd.DataFrame(output, columns=columns)
 
         # Make sure that we keep the same order of participants
@@ -143,14 +157,14 @@ class ForEstimation:
 
         return results_df
 
-    def model_estimation(self, df_subj: pd.DataFrame, agent_vars: "AgentVars") -> list:
+    def model_estimation(self, df_subj: pd.DataFrame, agent_vars: AgentVars) -> list:
         """This function estimates the free parameters of the model.
 
         Parameters
         ----------
         df_subj : pd.DataFrame
             Data frame with data of current participants.
-        agent_vars : "AgentVars"
+        agent_vars : AgentVars
             Agent variables object instance.
 
         Returns
@@ -162,9 +176,11 @@ class ForEstimation:
         # Control random number generator for reproducible results
         random.seed(123)
 
-        # Extract age group and subject number for output
+        # Extract age group, subject number, and ID for output
         subj_num = list(set(df_subj["subj_num"]))
         subj_num = float(subj_num[0])
+        id = list(set(df_subj["ID"]))[0]
+        group = float(list(set(df_subj["group"]))[0])
 
         # Extract free parameters
         values = self.which_vars.values()
@@ -175,6 +191,8 @@ class ForEstimation:
         bnds = [
             self.omikron_0_bnds,
             self.omikron_1_bnds,
+            self.lambda_0_bnds,
+            self.lambda_1_bnds,
             self.h_bnds,
             self.s_bnds,
             self.u_bnds,
@@ -201,6 +219,8 @@ class ForEstimation:
                     random.uniform(
                         self.omikron_1_x0_range[0], self.omikron_1_x0_range[1]
                     ),
+                    random.uniform(self.lambda_0_x0_range[0], self.lambda_0_x0_range[1]),
+                    random.uniform(self.lambda_1_x0_range[0], self.lambda_1_x0_range[1]),
                     random.uniform(self.h_x0_range[0], self.h_x0_range[1]),
                     random.uniform(self.s_x0_range[0], self.s_x0_range[1]),
                     random.uniform(self.u_x0_range[0], self.u_x0_range[1]),
@@ -212,6 +232,8 @@ class ForEstimation:
                 x0 = [
                     self.omikron_0_x0,
                     self.omikron_1_x0,
+                    self.lambda_0_x0,
+                    self.lambda_1_x0,
                     self.h_x0,
                     self.s_x0,
                     self.u_x0,
@@ -248,12 +270,15 @@ class ForEstimation:
         results_list = results_list + min_x
         results_list.append(float(min_llh))
         results_list.append(float(bic))
-        results_list.append(float(subj_num))
+        results_list.append(int(subj_num))
+        results_list.append(id)
+        results_list.append(group)
+
 
         return results_list
 
     def llh(
-        self, coeffs: np.ndarray, df: pd.DataFrame, agent_vars: "AgentVars"
+        self, coeffs: np.ndarray, df: pd.DataFrame, agent_vars: AgentVars
     ) -> float:
         """This function computes the cumulated negative log-likelihood of the data under the model.
 
@@ -292,8 +317,13 @@ class ForEstimation:
         # Call AlAgent object
         agent = AlAgent(agent_vars)
 
+        if  self.which_vars["lambda_0"] == True or self.which_vars["lambda_1"] == True:
+            mixture = True
+        else:
+            mixture = False
+
         # Estimate parameters
-        llh_mix, _ = task_agent_int(df, agent, agent_vars, sel_coeffs)
+        llh_mix, _ = task_agent_int(df, agent, agent_vars, sel_coeffs, mixture=mixture)
 
         # Consider prior over uncertainty-underestimation coefficient
         if self.use_prior:

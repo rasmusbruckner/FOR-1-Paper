@@ -1,9 +1,7 @@
 """Performs the model estimation."""
 
 if __name__ == "__main__":
-    import os
 
-    import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
     from ForEstimation import ForEstimation
@@ -11,14 +9,6 @@ if __name__ == "__main__":
     from rbmpy import AgentVars
 
     from FOR_1_Paper.for_utilities import safe_save_dataframe
-
-    # Turn interactive mode on
-    plt.ion()
-
-    # Get home directory
-    paths = os.getcwd()
-    path = paths.split(os.path.sep)
-    home_dir = path[1]
 
     # ------------
     # 1. Load data
@@ -53,6 +43,8 @@ if __name__ == "__main__":
     est_vars.which_vars = {
         est_vars.omikron_0: True,  # motor noise
         est_vars.omikron_1: True,  # learning-rate noise
+        est_vars.lambda_0: False,  # no perseveration
+        est_vars.lambda_1: False,  # no perseveration
         est_vars.h: True,  # hazard rate
         est_vars.s: True,  # surprise sensitivity
         est_vars.u: True,  # uncertainty underestimation
@@ -65,5 +57,6 @@ if __name__ == "__main__":
     # Estimate parameters and save data
     results_df = al_estimation.parallel_estimation(df_for, agent_vars)
 
-    results_df.name = "for_estimates_" + str(est_vars.n_sp) + "_sp"
+    # Save data
+    results_df.name = "rbm_estimates_" + str(est_vars.n_sp) + "sp"
     safe_save_dataframe(results_df)

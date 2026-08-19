@@ -1,5 +1,7 @@
 """Parameter recovery regression model.
 
+Todo: test with subject parameters as well
+
 1. Simulate data for recovery
 2. Estimate regression model
 3. Plot correlations
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     home_dir = path[1]
 
     # Number of random starting points for regression estimation
-    n_sp = 10
+    n_sp = 50
 
     # Load data
     df_for = pd.read_pickle("for_data/data_prepr_model.pkl")
@@ -188,6 +190,10 @@ if __name__ == "__main__":
         df_params["lambda_1"] = np.random.uniform(-5, -0.0, size=n_subj)
 
     df_params["subj_num"] = np.arange(1, n_subj + 1)
+
+    # Save the true parameters for the recovery plots
+    df_params.name = "regression_recovery_" + str(reg_vars.n_sp) + "_sp_true_params"
+    safe_save_dataframe(df_params)
 
     # Simulate updates based on sampled parameters
     n_trials = 400

@@ -12,6 +12,8 @@ class ForEstVars:
         # Parameter names for data frame
         self.omikron_0 = "omikron_0"  # motor noise
         self.omikron_1 = "omikron_1"  # learning-rate noise
+        self.lambda_0 = "lambda_0"  # perseveration intercept
+        self.lambda_1 = "lambda_1"  # perseveration slope
         self.h = "h"  # hazard rate
         self.s = "s"  # surprise sensitivity
         self.u = "u"  # uncertainty underestimation
@@ -20,6 +22,8 @@ class ForEstVars:
         # Select staring points (used if rand_sp = False)
         self.omikron_0_x0 = 5.0
         self.omikron_1_x0 = 0.0
+        self.lambda_0_x0 = 0.1
+        self.lambda_1_x0 = -0.2
         self.h_x0 = 0.1
         self.s_x0 = 0.999
         self.u_x0 = 0.0
@@ -28,6 +32,8 @@ class ForEstVars:
         # Select range of random starting point values (used if rand_sp = True)
         self.omikron_0_x0_range = (1, 10)
         self.omikron_1_x0_range = (0.001, 1)
+        self.lambda_0_x0_range = (-10, 30)
+        self.lambda_1_x0_range = (-0.5, 0.0)
         self.h_x0_range = (0.001, 0.99)
         self.s_x0_range = (0.001, 0.99)
         self.u_x0_range = (1, 10)
@@ -36,6 +42,8 @@ class ForEstVars:
         # Select boundaries for estimation
         self.omikron_0_bnds = (0.1, 20)
         self.omikron_1_bnds = (0.001, 1)
+        self.lambda_0_bnds = (-10, 30)
+        self.lambda_1_bnds = (-0.5, 0.0)
         self.h_bnds = (0.001, 0.99)
         self.s_bnds = (0.001, 1)
         self.u_bnds = (-2, 15)
@@ -45,6 +53,8 @@ class ForEstVars:
         self.which_vars = {
             self.omikron_0: True,
             self.omikron_1: True,
+            self.lambda_0: False,
+            self.lambda_1: False,
             self.h: True,
             self.s: True,
             self.u: True,
@@ -55,6 +65,8 @@ class ForEstVars:
         self.fixed_mod_coeffs = {
             self.omikron_0: 10.0,
             self.omikron_1: 0.0,
+            self.lambda_0: -10,
+            self.lambda_1: -0.5,
             self.h: 0.1,
             self.s: 1.0,
             self.u: 0.0,

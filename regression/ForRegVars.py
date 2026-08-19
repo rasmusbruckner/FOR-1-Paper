@@ -69,8 +69,8 @@ class RegVars:
         self.beta_8_x0_range = (-1, 1)
         self.omikron_0_x0_range = (1, 20)
         self.omikron_1_x0_range = (0, 1)
-        self.lambda_0_x0_range = (0, 1)
-        self.lambda_1_x0_range = (0, 1)
+        self.lambda_0_x0_range = (-10, 30)
+        self.lambda_1_x0_range = (-0.5, 0.0)
 
         # Select boundaries for estimation
         self.beta_0_bnds = (-2, 2)
@@ -84,8 +84,8 @@ class RegVars:
         self.beta_8_bnds = (-2, 2)
         self.omikron_0_bnds = (0.1, 20)
         self.omikron_1_bnds = (0.001, 1)
-        self.lambda_0_bnds = (0, 1)
-        self.lambda_1_bnds = (0, 1)
+        self.lambda_0_bnds = (-10, 30)
+        self.lambda_1_bnds = (-0.5, 0.0)
 
         self.bnds = [
             self.beta_0_bnds,
@@ -117,7 +117,7 @@ class RegVars:
             self.omikron_0: True,
             self.omikron_1: True,
             self.lambda_0: False,
-            self.lambda_1: True,
+            self.lambda_1: False,
         }
 
         # Fixed parameter values
@@ -169,7 +169,7 @@ class RegVars:
             self.lambda_1_prior_mean,
         ]
 
-        # Whenprior is used: pior width
+        # When prior is used: prior width
         # Note these can be tuned for future versions
         self.beta_0_prior_width = 5
         self.beta_1_prior_width = 5
@@ -209,3 +209,4 @@ class RegVars:
         self.show_ind_prog = True  # Update progress bar for each subject (True, False)
         self.rand_sp = True  # False = fixed starting points, True = random starting points
         self.n_sp = 5  # number of starting points (if rand_sp = True)
+        self.mixture_type = "hard_mixture"  # "soft_mixture" vs. "hard_mixture""

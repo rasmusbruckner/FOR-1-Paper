@@ -8,6 +8,19 @@
 # Todo: add summary plots across multiple simulations.
 #  Currently single-trial for each subject.
 
+import os
+import platform
+
+import matplotlib
+
+# Simple cross-platform backend selection
+if platform.system() == "Linux" and not os.environ.get("DISPLAY"):
+    matplotlib.use("Agg")  # Headless
+elif platform.system() == "Darwin":
+    matplotlib.use("MacOSX")  # macOS native
+else:
+    matplotlib.use("Qt5Agg")  # Linux with display, Windows, others
+
 import numpy as np
 import pandas as pd
 
@@ -26,14 +39,16 @@ df_exp = pd.read_pickle("for_data/data_prepr.pkl")
 n_subj = len(np.unique(df_exp["subj_num"]))  # number of subjects
 
 # Load estimated model parameters
-df_estimates = pd.read_pickle("for_data/for_estimates_10_sp.pkl")
+df_estimates = pd.read_pickle("for_data/rbm_estimates_10sp.pkl")
 
 # Simulation parameters
 df_model = pd.DataFrame(
-    columns=["omikron_0", "omikron_1", "h", "s", "u", "sigma_H", "subj_num"]
+    columns=["omikron_0", "omikron_1", "lambda_0", "lambda_1", "h", "s", "u", "sigma_H", "subj_num"]
 )
 df_model.loc[:, "omikron_0"] = df_estimates["omikron_0"].to_numpy()
 df_model.loc[:, "omikron_1"] = df_estimates["omikron_1"].to_numpy()
+df_model.loc[:, "lambda_0"] = -10  # no perseveration
+df_model.loc[:, "lambda_1"] = -0.5  # no perseveration
 df_model.loc[:, "h"] = df_estimates["h"].to_numpy()
 df_model.loc[:, "s"] = df_estimates["s"].to_numpy()
 df_model.loc[:, "u"] = df_estimates["u"].to_numpy()
@@ -47,7 +62,7 @@ df_model.loc[:, "subj_num"] = df_estimates["subj_num"].to_numpy()
 n_sim = 1  # 1 simulation per subject
 sim_pers = False  # no perseveration
 all_est_errs, all_data = simulation_loop(
-    df_exp, df_model, n_subj, plot_data=True, n_sim=n_sim, sim=True
+    df_exp, df_model, n_subj, plot_data=True, n_sim=n_sim, sim="agent"
 )
 
 # ------------

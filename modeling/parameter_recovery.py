@@ -4,11 +4,26 @@
 2. Simulate data for recovery
 3. Estimate models
 4. Plot correlations
+
+Todo: ultimately use consistent recovery approach with regression (sampling from subject distribution)
+    and if possible, use shared functions (also with model parameter recovery, not just regression)
 """
 
 if __name__ == "__main__":
 
+    import os
+    import platform
+
     import matplotlib
+
+    # Simple cross-platform backend selection
+    if platform.system() == "Linux" and not os.environ.get("DISPLAY"):
+        matplotlib.use("Agg")  # Headless
+    elif platform.system() == "Darwin":
+        matplotlib.use("MacOSX")  # macOS native
+    else:
+        matplotlib.use("Qt5Agg")  # Linux with display, Windows, others
+
     import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
@@ -43,22 +58,24 @@ if __name__ == "__main__":
     n_subj = len(np.unique(df_exp["subj_num"]))  # number of subjects
 
     # Load estimated model parameters
-    df_estimates = pd.read_pickle("for_data/for_estimates_10_sp.pkl")
+    df_estimates = pd.read_pickle("for_data/rbm_estimates_10sp.pkl")
 
     # -----------------------------
     # 2. Simulate data for recovery
     # -----------------------------
 
+    # Sor simulating the task data as well, use "task_agent"
+    sim = "agent"
+
     # Call AlEstVars object
     est_vars = ForEstVars()
     est_vars.n_subj = n_subj  # number of subjects
     est_vars.n_ker = 4  # number of kernels for estimation
-    est_vars.n_sp = 5  # number of random starting points
+    est_vars.n_sp = 10  # number of random starting points
     est_vars.rand_sp = True  # use random starting points
     est_vars.use_prior = (
-        False  # use weakly informative prior for uncertainty underestimation
+        True  # use weakly informative prior for uncertainty underestimation
     )
-    est_vars.circular = True
 
     # ------------------
     # 3. Estimate models
@@ -68,6 +85,8 @@ if __name__ == "__main__":
     est_vars.fixed_mod_coeffs = {
         est_vars.omikron_0: 5.0,
         est_vars.omikron_1: 0.0,
+        est_vars.lambda_0: -10,
+        est_vars.lambda_1: -0.5,
         est_vars.h: 0.1,
         est_vars.s: 1.0,
         est_vars.u: 0.0,
@@ -78,6 +97,8 @@ if __name__ == "__main__":
     est_vars.which_vars = {
         est_vars.omikron_0: True,  # motor noise
         est_vars.omikron_1: True,  # learning-rate noise
+        est_vars.lambda_0: True,  # perseveration intercept
+        est_vars.lambda_1: True,  # perseveration slope
         est_vars.h: True,  # hazard rate
         est_vars.s: True,  # surprise sensitivity
         est_vars.u: True,  # uncertainty underestimation
@@ -89,7 +110,17 @@ if __name__ == "__main__":
 
     # Simulation parameters
     df_model = pd.DataFrame(
-        columns=["omikron_0", "omikron_1", "h", "s", "u", "sigma_H", "subj_num"]
+        columns=[
+            "omikron_0",
+            "omikron_1",
+            "lambda_0",
+            "lambda_1",
+            "h",
+            "s",
+            "u",
+            "sigma_H",
+            "subj_num",
+        ]
     )
 
     use_subject_estimates = False
@@ -98,7 +129,7 @@ if __name__ == "__main__":
             df_model.loc[:, "omikron_0"] = df_estimates["omikron_0"].to_numpy()
         else:
             df_model.loc[:, "omikron_0"] = np.random.uniform(
-                low=5.0, high=10.0, size=n_subj
+                low=1.0, high=10.0, size=n_subj
             )
     else:
         df_model.loc[:, "omikron_0"] = np.repeat(
@@ -116,6 +147,10 @@ if __name__ == "__main__":
         df_model.loc[:, "omikron_1"] = np.repeat(
             est_vars.fixed_mod_coeffs["omikron_1"], n_subj
         )
+
+    if est_vars.which_vars["lambda_0"] and est_vars.which_vars["lambda_1"]:
+        df_model.loc[:, "lambda_0"] = np.random.uniform(-5, 30, size=n_subj)
+        df_model.loc[:, "lambda_1"] = np.random.uniform(-0.5, 0, size=n_subj)
 
     if est_vars.which_vars["h"]:
         if use_subject_estimates:
@@ -146,7 +181,7 @@ if __name__ == "__main__":
             df_model.loc[:, "sigma_H"] = df_estimates["sigma_H"].to_numpy()
         else:
             df_model.loc[:, "sigma_H"] = np.random.uniform(
-                low=0.0, high=0.5, size=n_subj
+                low=0.01, high=0.5, size=n_subj
             )
     else:
         df_model.loc[:, "sigma_H"] = np.repeat(
@@ -155,16 +190,23 @@ if __name__ == "__main__":
 
     df_model.loc[:, "subj_num"] = df_estimates["subj_num"].to_numpy()
 
+    # Save the true parameters for the recovery plots
+    df_model.name = "parameter_recovery_" + str(est_vars.n_sp) + "sp_true_params"
+    safe_save_dataframe(df_model)
+
     n_sim = 1  # 1 simulation per subject
-    sim_pers = False  # no perseveration
+    mixture = True
+    sim = "agent"
     all_est_errs, df_sim = simulation_loop(
-        df_exp, df_model, n_subj, plot_data=False, n_sim=n_sim, sim=True
+        df_exp, df_model, n_subj, plot_data=False, n_sim=n_sim, sim=sim, mixture=mixture
     )
 
     df_recov = pd.DataFrame(index=range(0, len(df_sim)), dtype="float")
     df_recov["subj_num"] = df_exp["subj_num"].copy()
+    df_recov["group"] = 0
+    df_recov["ID"] = df_exp["ID"].copy()
     df_recov["new_block"] = df_exp["new_block"].copy()
-    df_recov["x_t_rad"] = df_exp["x_t_rad"].copy()
+    df_recov["x_t_rad"] = df_sim["x_t_rad"].copy()
     df_recov["a_t_rad"] = df_sim["sim_a_t_rad"].copy()
     df_recov["delta_t_rad"] = df_sim["delta_t_rad"].copy()
     df_recov["v_t"] = df_exp["v_t"].copy()
@@ -176,9 +218,14 @@ if __name__ == "__main__":
     agent_vars = AgentVars()
     agent_vars.max_x = 2 * np.pi
 
+    plt.figure()
+    plt.plot(df_recov.loc[0:100, "mu_t_rad"], "--")
+    plt.plot(df_recov.loc[0:100, "x_t_rad"], ".")
+    plt.plot(df_recov.loc[0:100, "b_t_rad"], "-.")
+
     # Estimate parameters and save data
     results_df = al_estimation.parallel_estimation(df_recov, agent_vars)
-    results_df.name = "parameter_recovery_" + str(est_vars.n_sp) + "_sp"
+    results_df.name = "parameter_recovery_" + sim + "_" + str(est_vars.n_sp) + "sp"
     safe_save_dataframe(results_df)
 
     # --------------------
@@ -188,6 +235,8 @@ if __name__ == "__main__":
     behav_labels = [
         "omikron_0",
         "omikron_1",
+        "lambda_0",
+        "lambda_1",
         "h",
         "s",
         "u",

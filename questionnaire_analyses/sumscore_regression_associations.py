@@ -37,14 +37,14 @@ if __name__ == "__main__":
     df_questionnaires = df_questionnaires.sort_values(by=["subj_num"])
 
     # Load data of best regression model
-    df_regression = pd.read_pickle("for_data/regression_model_2_3_50_sp.pkl")
+    df_regression = pd.read_pickle("for_data/regression_23_50sp.pkl")
 
     # Load data for regression applied separately for low and high noise
     df_regression_low_noise = pd.read_pickle(
-        "for_data/regression_model_low_noise_2_3_50_sp.pkl"
+        "for_data/regression_low_noise_23_50sp.pkl"
     )
     df_regression_high_noise = pd.read_pickle(
-        "for_data/regression_model_high_noise_2_3_50_sp.pkl"
+        "for_data/regression_high_noise_23_50sp.pkl"
     )
 
     # Sort values just to be sure
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     df_regression_high_noise = df_regression_high_noise[
         df_regression_high_noise["ID"].isin(common_ids)
     ].reset_index(drop=True)
-    df_factor_analysis = df_questionnaires[
+    df_questionnaires = df_questionnaires[
         df_questionnaires["subj_num"].isin(common_ids)
     ].reset_index(drop=True)
 
