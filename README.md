@@ -3,7 +3,7 @@
 Repository for the emerging paper with first data from the Research Unit. 
 
 ## Specification Curve Analysis
-We have implemented a specification curve analysis for empirical data. We are currently working on simulations for this. 
+We have implemented a specification curve analysis for simulated and empirical data.
 
 ## Circular Regression and Model Estimation
 The repository contains resources for circular regression and model estimation using the RBM.
